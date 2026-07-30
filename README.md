@@ -361,3 +361,7 @@ Compilar el APK con los pasos de arriba y distribuirlo directamente o publicarlo
 Cristian Barreras  
 cristianbarrerasp@gmail.com  
 Julio 2026
+
+<!-- Auth Module -->
+
+<!-- Recovery Flow -->
