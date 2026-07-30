@@ -365,3 +365,7 @@ Julio 2026
 <!-- Auth Module -->
 
 <!-- Recovery Flow -->
+
+<!-- Games -->
+
+<!-- XP -->
