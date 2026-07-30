@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentación de Interfaz y Desarrollo - Zynatra</title>
+    <style>
+        :root {
+            --primary: #50b8c4;
+            --dark: #2c3e50;
+            --light: #f8fafc;
+            --gray: #e2e8f0;
+            --text: #334155;
+        }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            max-width: 1000px; 
+            margin: 0 auto; 
+            padding: 40px; 
+            color: var(--text); 
+            line-height: 1.7; 
+            background-color: #fff;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 50px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid var(--primary);
+        }
+        h1 { color: var(--dark); margin-bottom: 5px; font-size: 2.5em; text-transform: uppercase; letter-spacing: 2px;}
+        .subtitle { color: #64748b; font-size: 1.3em; margin-top: 0; font-weight: 300; }
+        
+        h2 { 
+            color: var(--dark); 
+            margin-top: 40px;
+            padding-left: 15px;
+            border-left: 5px solid var(--primary);
+            background-color: var(--light);
+            padding: 10px 15px;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        h3 {
+            color: #475569;
+            margin-top: 25px;
+            font-size: 1.2em;
+        }
+
+        p { text-align: justify; }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .feature-card {
+            border: 1px solid var(--gray);
+            padding: 20px;
+            border-radius: 10px;
+            background: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .feature-card h4 {
+            margin-top: 0;
+            color: var(--primary);
+            border-bottom: 1px dashed var(--gray);
+            padding-bottom: 10px;
+        }
+
+        .code-block {
+            background-color: #1e293b;
+            color: #f8fafc;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.9em;
+            overflow-x: auto;
+        }
+        
+        .print-instruction {
+            background: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 30px;
+            border: 1px solid #ffeeba;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid var(--gray);
+            padding: 12px;
+            text-align: left;
+        }
+        th { background-color: var(--light); color: var(--dark); }
+
+        @media print {
+            body { padding: 0; max-width: 100%; }
+            .print-instruction { display: none; }
+            .feature-card { page-break-inside: avoid; border: 1px solid #ccc; box-shadow: none; }
+            h2, h3 { page-break-after: avoid; }
+            table { page-break-inside: avoid; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="print-instruction">
+        🖨️ Para guardar este documento como un PDF perfecto: presiona <strong>Ctrl + P</strong> (o Cmd + P) en tu navegador y elige <strong>"Guardar como PDF"</strong>. Habilita "Gráficos de fondo".
+    </div>
+
+    <div class="header">
+        <h1>ZYNATRA</h1>
+        <p class="subtitle">Documentación de Interfaz y Desarrollo (UI/UX)</p>
+    </div>
+
+    <p>Este documento certifica el cumplimiento de los requerimientos de <strong>Interfaz y Desarrollo</strong> del sistema Zynatra, detallando la implementación de interfaces navegables dinámicas, el sistema estricto de validación de formularios y la estructura visual completamente responsiva y adaptativa para dispositivos móviles Android.</p>
+
+    <!-- 1. Estructura Visual Responsiva -->
+    <h2>1. Estructura Visual Responsiva (Mobile-First)</h2>
+    <p>El sistema fue diseñado con una arquitectura "Mobile-First" utilizando CSS moderno puro, garantizando que los elementos se acomoden perfectamente sin distorsionarse en cualquier tamaño de pantalla, desde monitores de escritorio hasta dispositivos móviles compactos.</p>
+    
+    <div class="feature-grid">
+        <div class="feature-card">
+            <h4>Puntos de Quiebre (Breakpoints)</h4>
+            <ul>
+                <li><strong>> 768px (Desktop):</strong> Layout de doble panel (Sidebar izquierdo de 250px + Contenido Principal).</li>
+                <li><strong>≤ 768px (Tablet/Móvil):</strong> El sidebar colapsa y se transforma en una barra de navegación inferior (Bottom Tab Bar) anclada a la pantalla.</li>
+                <li><strong>≤ 420px (Android):</strong> Reducción paramétrica de paddings y fuentes.</li>
+            </ul>
+        </div>
+        <div class="feature-card">
+            <h4>Tipografía Fluida</h4>
+            <p>Implementación de la función matemática <code>clamp()</code> en CSS para escalar tipografías dinámicamente sin usar múltiples media queries, asegurando legibilidad sin desbordamientos:</p>
+            <div class="code-block">font-size: clamp(1rem, 2vw, 1.25rem);</div>
+        </div>
+    </div>
+
+    <div class="feature-card" style="margin-top: 20px;">
+        <h4>Optimizaciones Específicas para Android (Capacitor)</h4>
+        <p>Para garantizar una experiencia de App Nativa al compilar con Capacitor, se implementaron las siguientes reglas:</p>
+        <ul>
+            <li><strong>Prevención de Zoom:</strong> Se configuraron todos los inputs con <code>font-size: 16px</code> para evitar que Chrome/Android haga zoom automático al enfocar un campo.</li>
+            <li><strong>Safe Area Insets:</strong> Uso de <code>padding-bottom: env(safe-area-inset-bottom)</code> en la barra de navegación para evitar superposiciones con la barra de gestos de navegación de Android.</li>
+            <li><strong>Toque Fantasma:</strong> Desactivación del destello azul en botones usando <code>-webkit-tap-highlight-color: transparent</code> y prevención de doble toque táctil con <code>touch-action: manipulation</code>.</li>
+        </ul>
+    </div>
+
+    <!-- 2. Interfaces Navegables -->
+    <h2>2. Arquitectura de Interfaces Navegables</h2>
+    <p>Zynatra está construida como una <strong>Single Page Application (SPA)</strong> en React. En lugar de recargar la página entera o depender de enrutadores complejos, utiliza un sistema de navegación por estados (React State) que inyecta componentes dinámicamente, garantizando transiciones instantáneas.</p>
+
+    <table>
+        <tr>
+            <th>Controlador</th>
+            <th>Mecanismo de Navegación</th>
+            <th>Comportamiento UX</th>
+        </tr>
+        <tr>
+            <td><strong>App.jsx</strong></td>
+            <td>Renderizado condicional basado en el rol (Student, Teacher, Admin).</td>
+            <td>Protege las rutas. Un estudiante nunca puede acceder a vistas de docente mediante manipulación de URLs.</td>
+        </tr>
+        <tr>
+            <td><strong>Sidebar.jsx</strong></td>
+            <td>Actualización del estado global de la vista activa (<code>activeTab</code>).</td>
+            <td>Resalta visualmente el ícono y texto de la pestaña actual. En móvil, mantiene la navegación al alcance del pulgar.</td>
+        </tr>
+        <tr>
+            <td><strong>Paginación Interna</strong></td>
+            <td>Manejo de pasos (steps) en memoria.</td>
+            <td>En flujos como el Test Vocacional, se navega entre preguntas sin cambiar de "página", usando barras de progreso suaves.</td>
+        </tr>
+    </table>
+
+    <!-- 3. Validación de Formularios Funcionales -->
+    <h2>3. Validación de Formularios Funcionales y Seguros</h2>
+    <p>El sistema cuenta con validaciones estrictas tanto en tiempo real (Client-side) como en procesamiento lógico para evitar la inyección de datos corruptos, proteger la integridad de la base de datos y guiar al usuario ante errores tipográficos.</p>
+
+    <div class="feature-grid">
+        <div class="feature-card">
+            <h4>Módulo de Autenticación y Registro</h4>
+            <ul>
+                <li><strong>Sanitización de Entradas:</strong> Todo correo electrónico ingresado es procesado automáticamente por <code>.toLowerCase().trim()</code> antes de validarse.</li>
+                <li><strong>Feedback en Tiempo Real:</strong> Alertas visuales inmediatas si hay campos vacíos, si las contraseñas no coinciden o si el formato del correo es inválido.</li>
+                <li><strong>Manejo de Estado:</strong> Bloqueo de botones repetidos (estado <code>loading = true</code>) para evitar múltiples envíos del formulario al servidor por error del usuario o lag.</li>
+            </ul>
+        </div>
+        <div class="feature-card">
+            <h4>Sistema de Recuperación de Cuenta (3 Pasos)</h4>
+            <ul>
+                <li><strong>Cajas OTP (One Time Password):</strong> Interface de 6 inputs individuales para el código de seguridad. Soporta pegado de portapapeles y auto-avance al siguiente campo tras teclear.</li>
+                <li><strong>Seguridad de Intentos:</strong> Bloqueo temporal del formulario tras 5 intentos fallidos de ingresar el código.</li>
+                <li><strong>Medidor de Fuerza:</strong> Validación de la nueva contraseña requiriendo al menos 6 caracteres y mostrando un semáforo visual de seguridad (Rojo/Amarillo/Verde).</li>
+            </ul>
+        </div>
+    </div>
+
+    <h3>Ejemplo Técnico: Control de Inputs Dinámicos (OTP)</h3>
+    <p>La validación de la interfaz de recuperación asegura que el usuario solo pueda ingresar números en las casillas del código de seguridad y gestiona el foco automáticamente para una experiencia de usuario (UX) impecable:</p>
+    
+    <div class="code-block">
+// Manejo de pulsación de teclas en cajas de código
+const handleCodeKeyDown = (e, index) => {
+    if (e.key === 'Backspace' && !codeDigits[index] && index > 0) {
+        // Retroceso automático inteligente
+        document.getElementById(`digit-${index - 1}`).focus();
+    }
+};
+
+const handleCodeChange = (e, index) => {
+    const val = e.target.value.replace(/[^0-9]/g, ""); // Solo permite números
+    if (val && index < 5) {
+        // Avance automático al siguiente input
+        document.getElementById(`digit-${index + 1}`).focus();
+    }
+};
+    </div>
+
+    <h3>Validación de Modales y Creación de Tareas</h3>
+    <p>En el rol Docente, los formularios de creación de tareas validan que la <strong>Fecha Límite</strong> nunca sea anterior a la fecha actual, y previenen el envío si los campos de título o descripción contienen solo espacios en blanco (mediante <code>.trim()</code>).</p>
+
+</body>
+</html>

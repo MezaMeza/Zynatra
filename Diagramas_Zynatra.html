@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modelado y Diagramas UML - Zynatra</title>
+    <!-- Cargamos Mermaid.js para renderizar los diagramas -->
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+      mermaid.initialize({ 
+          startOnLoad: true, 
+          theme: 'neutral',
+          fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif'
+      });
+    </script>
+    <style>
+        :root {
+            --primary: #50b8c4;
+            --dark: #2c3e50;
+            --light: #f8fafc;
+            --gray: #e2e8f0;
+        }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            max-width: 1000px; 
+            margin: 0 auto; 
+            padding: 40px; 
+            color: #333; 
+            line-height: 1.6; 
+            background-color: #fff;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 50px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid var(--primary);
+        }
+        h1 { color: var(--dark); margin-bottom: 5px; font-size: 2.5em; }
+        .subtitle { color: #64748b; font-size: 1.2em; margin-top: 0; }
+        
+        h2 { 
+            color: var(--dark); 
+            margin-top: 50px;
+            padding-left: 15px;
+            border-left: 5px solid var(--primary);
+        }
+        p { text-align: justify; }
+        
+        .diagram-container { 
+            background: var(--light); 
+            padding: 30px; 
+            border-radius: 12px; 
+            margin-bottom: 40px; 
+            border: 1px solid var(--gray);
+            display: flex;
+            justify-content: center;
+        }
+        
+        .print-instruction {
+            background: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 30px;
+            border: 1px solid #ffeeba;
+        }
+
+        @media print {
+            body { padding: 0; max-width: 100%; }
+            .print-instruction { display: none; }
+            .diagram-container { 
+                page-break-inside: avoid; 
+                background: transparent;
+                border: none;
+                padding: 10px;
+            }
+            h2 { page-break-after: avoid; }
+            .mermaid { page-break-inside: avoid; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="print-instruction">
+        🖨️ Para guardar este documento como un PDF perfecto: presiona <strong>Ctrl + P</strong> (o Cmd + P) en tu navegador y elige <strong>"Guardar como PDF"</strong>. Asegúrate de habilitar "Gráficos de fondo" en más opciones para que se vean bien los colores.
+    </div>
+
+    <div class="header">
+        <h1>ZYNATRA</h1>
+        <p class="subtitle">Arquitectura de Software y Modelado de Base de Datos</p>
+    </div>
+
+    <p>Este documento contiene el diseño de arquitectura y modelado de datos para la plataforma <strong>Zynatra</strong>. Incluye el modelo Entidad-Relación normalizado hasta la Tercera Forma Normal (3FN), asegurando la integridad referencial y eliminando redundancias, además de los tres diagramas UML fundamentales que describen el comportamiento, la estructura y las interacciones del sistema.</p>
+
+    <!-- 1. Modelo Entidad-Relación -->
+    <h2>1. Modelo Entidad-Relación (Normalizado 3FN)</h2>
+    <p>La base de datos (diseñada para Firestore/NoSQL pero modelada lógicamente de forma relacional) separa la información de los usuarios de su progreso académico y sus transacciones, garantizando la Tercera Forma Normal.</p>
+    
+    <div class="diagram-container">
+        <div class="mermaid">
+        erDiagram
+            COLEGIO ||--o{ USUARIO : "pertenece (1:N)"
+            USUARIO ||--o| ESTUDIANTE : "es un (1:1)"
+            USUARIO ||--o{ TAREA : "crea (1:N)"
+            ESTUDIANTE ||--o{ ENTREGA : "realiza (1:N)"
+            TAREA ||--o{ ENTREGA : "recibe (1:N)"
+            USUARIO ||--o{ RECUPERACION : "solicita (1:N)"
+            ESTUDIANTE }o--o{ CONEXION : "explora directorio"
+
+            COLEGIO {
+                string id PK
+                string nombre
+                string direccion
+            }
+            USUARIO {
+                string uid PK
+                string nombre
+                string email
+                string rol "student, teacher, admin"
+                string estado "activo, suspendido"
+                string colegioId FK
+            }
+            ESTUDIANTE {
+                string uid PK,FK
+                int xp
+                int nivel
+                string talentProfile "JSON Object"
+                int rachaDias
+            }
+            TAREA {
+                string id PK
+                string titulo
+                string descripcion
+                string materia
+                date fechaLimite
+                string docenteId FK
+            }
+            ENTREGA {
+                string id PK
+                string tareaId FK
+                string estudianteId FK
+                string estado "pendiente, calificado"
+                int calificacion
+                string feedback
+            }
+            RECUPERACION {
+                string id PK
+                string email
+                string estado
+                string codigo "PIN 6 dígitos"
+                date expiraEn
+            }
+            CONEXION {
+                string id PK
+                string nombre
+                string tipo "Universidad, Técnico"
+                string disciplina
+                string ubicacion
+            }
+        </div>
+    </div>
+
+    <!-- 2. Diagrama de Casos de Uso -->
+    <h2>2. Diagrama de Casos de Uso (UML)</h2>
+    <p>Define las interacciones de los tres actores principales del sistema (Estudiante, Docente y Administrador) con los módulos funcionales de la plataforma.</p>
+    
+    <div class="diagram-container">
+        <div class="mermaid">
+        flowchart LR
+            %% Estilos
+            classDef actor fill:#f8fafc,stroke:#334155,stroke-width:2px;
+            classDef usecase fill:#e0f2fe,stroke:#0284c7,stroke-width:2px,rx:20px,ry:20px;
+
+            %% Actores
+            EST([Estudiante]):::actor
+            DOC([Docente]):::actor
+            ADM([Administrador]):::actor
+
+            %% Casos de Uso
+            subgraph Zynatra [Sistema Zynatra]
+                direction TB
+                CU1(Realizar Test de IQ y Vocacional):::usecase
+                CU2(Jugar en la Arena Interactiva):::usecase
+                CU3(Interactuar con Asesor IA):::usecase
+                CU4(Subir Entregas de Tareas):::usecase
+                CU5(Crear y Asignar Tareas):::usecase
+                CU6(Revisar y Calificar Entregas):::usecase
+                CU7(Gestionar Usuarios y Roles):::usecase
+                CU8(Revisar Estadísticas Globales):::usecase
+                CU9(Solicitar Recuperación de Cuenta):::usecase
+            end
+
+            %% Relaciones
+            EST --> CU1
+            EST --> CU2
+            EST --> CU3
+            EST --> CU4
+            EST --> CU9
+
+            DOC --> CU5
+            DOC --> CU6
+            DOC --> CU9
+
+            ADM --> CU7
+            ADM --> CU8
+            ADM --> CU9
+        </div>
+    </div>
+
+    <!-- 3. Diagrama de Clases -->
+    <h2>3. Diagrama de Clases (UML)</h2>
+    <p>Representa la estructura estática del sistema, mostrando las clases principales, sus atributos, métodos y las relaciones de herencia y asociación entre ellas.</p>
+    
+    <div class="diagram-container">
+        <div class="mermaid">
+        classDiagram
+            class User {
+                +String uid
+                +String nombre
+                +String email
+                +String rol
+                +String estado
+                +login(email, password)
+                +logout()
+                +resetPassword(newPassword)
+            }
+            class Student {
+                +int xp
+                +int nivel
+                +Object talentProfile
+                +int rachaDias
+                +awardXP(amount)
+                +updateStreak()
+                +saveVocationalResult(profile)
+            }
+            class Teacher {
+                +createTask(Task)
+                +gradeSubmission(Submission, grade)
+            }
+            class Admin {
+                +manageUsers()
+                +resolveRecoveryRequest(id)
+                +suspendUser(uid)
+            }
+            
+            %% Herencia
+            User <|-- Student : Herencia
+            User <|-- Teacher : Herencia
+            User <|-- Admin : Herencia
+
+            class Task {
+                +String id
+                +String titulo
+                +String materia
+                +Date fechaLimite
+                +String docenteId
+            }
+            
+            class Submission {
+                +String id
+                +String estado
+                +int calificacion
+                +submitFeedback(text)
+            }
+
+            class Connection {
+                +String id
+                +String nombre
+                +String tipo
+                +String disciplina
+                +String ubicacion
+            }
+
+            class RecoveryRequest {
+                +String id
+                +String email
+                +String codigo
+                +Date expiraEn
+                +String estado
+            }
+            
+            %% Asociaciones
+            Teacher "1" --> "*" Task : Asigna
+            Task "1" --> "*" Submission : Contiene
+            Student "1" --> "*" Submission : Realiza
+            Student "*" --> "*" Connection : Revisa Directorio
+            User "1" --> "*" RecoveryRequest : Solicita
+        </div>
+    </div>
+
+    <!-- 4. Diagrama de Actividades -->
+    <h2>4. Diagrama de Actividades (UML) - Flujo de Recuperación</h2>
+    <p>Describe el flujo dinámico paso a paso del proceso de recuperación de contraseña, incluyendo condicionales, envíos de códigos OTP (One Time Password) y manejo de errores.</p>
+    
+    <div class="diagram-container">
+        <div class="mermaid">
+        stateDiagram-v2
+            [*] --> PantallaRecuperacion
+            
+            PantallaRecuperacion --> BuscarCuenta: 1. Ingresa correo
+            
+            state "Validar Existencia" as Verificar
+            BuscarCuenta --> Verificar: Consulta BD/Local
+            
+            Verificar --> PantallaRecuperacion: [No Existe] Error
+            Verificar --> GenerarCodigo: [Existe Cuenta]
+            
+            GenerarCodigo --> EnviarCodigo: Crea PIN 6 dígitos
+            EnviarCodigo --> PantallaCodigo: Envía SMS/Correo
+            
+            state "Validar PIN" as VerificarPIN
+            PantallaCodigo --> VerificarPIN: 2. Ingresa PIN
+            
+            VerificarPIN --> PantallaCodigo: [Incorrecto] Intento fallido
+            VerificarPIN --> NuevaContrasena: [Correcto y Vigente]
+            
+            NuevaContrasena --> GuardarContrasena: 3. Escribe nueva clave
+            GuardarContrasena --> [*]: Redirige al Login
+        </div>
+    </div>
+
+</body>
+</html>
