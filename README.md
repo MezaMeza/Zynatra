@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # ZYNATRA — Documentación Técnica
 
 **Plataforma de Orientación Vocacional con Inteligencia Artificial**
@@ -369,3 +370,7 @@ Julio 2026
 <!-- Games -->
 
 <!-- XP -->
+=======
+# ZINATRA
+APLICACION DE TEST VOCACIONAL
+>>>>>>> ea4109339b617c923a6b9e9e0bc3bfdda4baa447
