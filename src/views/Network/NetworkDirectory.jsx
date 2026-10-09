@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   Network,
   Search,
@@ -405,7 +406,7 @@ export default function NetworkDirectory() {
       )}
 
       {/* ===== DETAIL MODAL ===== */}
-      {detail && (
+      {detail && createPortal(
         <div onClick={() => setDetail(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", padding: "1.5rem", zIndex: 1000 }}>
           <div onClick={e => e.stopPropagation()} className="glass-panel" style={{ background: "#fff", maxWidth: "760px", width: "100%", maxHeight: "88vh", overflowY: "auto", padding: "1.75rem" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "1rem" }}>
@@ -453,7 +454,8 @@ export default function NetworkDirectory() {
               <a href={detail.admisionUrl} target="_blank" rel="noopener noreferrer" className="btn btn-glass" style={{ gap: "0.4rem" }}><Activity size={15} /> Admisión</a>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

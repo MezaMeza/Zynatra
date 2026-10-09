@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { useData } from "../../context/DataContext";
 import { BookOpen, Search, Clock, CheckCircle, Eye, X } from "lucide-react";
 import { RESOURCES } from "../../data/resources";
@@ -94,7 +95,7 @@ export default function ResourceLibrary() {
         })}
       </div>
 
-      {selected && (
+      {selected && createPortal(
         <div
           onClick={() => setSelected(null)}
           style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "center", justifyContent: "center", padding: "1.5rem", zIndex: 1000 }}
@@ -117,7 +118,8 @@ export default function ResourceLibrary() {
             </div>
             <p style={{ color: "var(--text-secondary)", lineHeight: "1.7", fontSize: "0.95rem" }}>{selected.contenido}</p>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
