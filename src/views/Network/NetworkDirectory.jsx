@@ -131,8 +131,8 @@ export default function NetworkDirectory() {
           </p>
         </div>
 
-        {/* TABS (una sola línea) */}
-        <div style={{ display: "flex", gap: "0.5rem", flexWrap: "nowrap", overflowX: "auto", paddingBottom: "0.25rem" }}>
+        {/* TABS (una línea en desktop, wrap en móvil) */}
+        <div className="network-tabs" style={{ display: "flex", gap: "0.5rem", flexWrap: "nowrap", overflowX: "auto", paddingBottom: "0.25rem" }}>
           {tabBtn("institutions", <Network size={16} />, <>Universidades &amp; Técnicos ({INSTITUTIONS.length})</>)}
           {tabBtn("careers", <GraduationCap size={16} />, <>Carreras ({TOTAL_CAREERS})</>)}
           {tabBtn("prematricula", <CheckCircle size={16} />, <>Pre-Matrícula {preList.length > 0 && `(${preList.length})`}</>)}
@@ -458,6 +458,12 @@ export default function NetworkDirectory() {
         </div>,
         document.body
       )}
+
+      <style>{`
+        @media (max-width: 768px) {
+          .network-tabs { flex-wrap: wrap !important; overflow-x: visible !important; }
+        }
+      `}</style>
     </div>
   );
 }
