@@ -73,6 +73,16 @@ button {
   border-color: rgba(91, 191, 191, 0.3);
 }
 
+/* Sticky page header — keeps the view title visible while scrolling */
+.page-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--bg-dark);
+  padding-top: 0.5rem;
+  padding-bottom: 0.85rem;
+}
+
 .glass-card {
   background: #ffffff;
   border: 1px solid var(--border-glass);
@@ -240,7 +250,7 @@ button {
 /* Animations */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  to { opacity: 1; transform: none; }
 }
 
 @keyframes pulseGlow {

@@ -88,7 +88,7 @@ export default function NetworkDirectory() {
   return (
     <div className="animate-fade-in" style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
       {/* HEADER */}
-      <div>
+      <div className="page-header">
         <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.5rem" }}>
           <span style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", background: "rgba(16,185,129,0.12)", color: "#10b981", padding: "0.3rem 0.75rem", borderRadius: "999px", fontSize: "0.7rem", fontWeight: 800, letterSpacing: "0.03em" }}>
             <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#10b981", boxShadow: "0 0 8px #10b981" }} />
