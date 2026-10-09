@@ -1,720 +1,417 @@
-import React, { useState, useEffect } from "react";
-import { useData } from "../../context/DataContext";
-import { useAuth } from "../../context/AuthContext";
+import { useState, useMemo, useEffect } from "react";
 import {
   Network,
   Search,
   MapPin,
-  Link,
-  CheckCircle,
-  Sparkles,
-  GraduationCap,
-  Compass,
+  Wifi,
+  RefreshCw,
+  Calendar,
   Award,
-  Calendar
+  BookOpen,
+  GraduationCap,
+  CheckCircle,
+  ChevronRight,
+  Server,
+  Activity,
+  Sparkles,
+  X,
+  Clock,
+  Building2,
+  Users
 } from "lucide-react";
+import { INSTITUTIONS, ADMISSION_PHASES, TOTAL_CAREERS } from "../../data/academicNetwork";
 import { SCHOLARSHIPS } from "../../data/scholarships";
-import {
-  DISCIPLINES,
-  getDisciplineBadgeClass,
-  getDisciplineButtonClass,
-  getDisciplineFromProfile
-} from "../../utils/vocational";
 
-function InstitutionCard({ conn, isConnected, isRecommended, onConnect }) {
-  return (
-    <div className="glass-card animate-fade-in" style={{
-      display: "flex",
-      flexDirection: "column",
-      gap: "1.25rem",
-      height: "100%",
-      border: isRecommended ? "1px solid rgba(139, 92, 246, 0.4)" : undefined,
-      boxShadow: isRecommended ? "0 0 20px rgba(139, 92, 246, 0.15)" : undefined
-    }}>
-      {isRecommended && (
-        <span className="badge badge-primary" style={{
-          alignSelf: "flex-start",
-          fontSize: "0.65rem",
-          display: "flex",
-          alignItems: "center",
-          gap: "0.25rem"
-        }}>
-          <Sparkles size={12} />
-          Recomendado para tu perfil
-        </span>
-      )}
+const DISCIPLINES = ["Todos", "Ecología", "Tecnología", "Ingeniería", "Arte"];
 
-      <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
-        <div style={{
-          width: "50px",
-          height: "50px",
-          borderRadius: "12px",
-          background: "rgba(255, 255, 255, 0.05)",
-          border: "1px solid var(--border-glass)",
-          fontSize: "1.75rem",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center"
-        }}>
-          {conn.logo}
-        </div>
-        <div>
-          <span className="badge badge-secondary" style={{ fontSize: "0.65rem", padding: "0.15rem 0.5rem" }}>
-            {conn.tipo}
-          </span>
-          <h4 style={{ fontSize: "1rem", fontWeight: 700, marginTop: "0.25rem", lineHeight: "1.3" }}>
-            {conn.nombre}
-          </h4>
-        </div>
-      </div>
-
-      <div style={{ display: "flex", gap: "0.5rem" }}>
-        <span className={`badge ${getDisciplineBadgeClass(conn.disciplina)}`} style={{ fontSize: "0.7rem" }}>
-          {conn.disciplina}
-        </span>
-        <span className="badge badge-glass" style={{ fontSize: "0.7rem", color: "var(--text-secondary)", textTransform: "none" }}>
-          SEN / Educación Superior
-        </span>
-      </div>
-
-      <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", lineHeight: "1.5", flex: 1 }}>
-        {conn.descripcion}
-      </p>
-
-      <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", color: "var(--text-muted)", fontSize: "0.8rem" }}>
-        <MapPin size={14} />
-        <span>{conn.ubicacion}</span>
-      </div>
-
-      <div style={{ borderTop: "1px solid var(--border-glass)", paddingTop: "1rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Convenio Polaris</span>
-        <button
-          onClick={() => onConnect(conn.id)}
-          className={`btn ${isConnected ? "btn-accent" : "btn-glass"}`}
-          style={{ padding: "0.5rem 1rem", fontSize: "0.8rem", gap: "0.25rem" }}
-        >
-          {isConnected ? (
-            <>
-              <CheckCircle size={14} />
-              <span>Conectado</span>
-            </>
-          ) : (
-            <>
-              <Link size={14} />
-              <span>Vincular</span>
-            </>
-          )}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-export default function NetworkDirectory({ setActiveTab }) {
-  const { currentUser } = useAuth();
-  const { connections, studentInfo, loading } = useData();
-  const [viewMode, setViewMode] = useState("institutions");
-  const [searchTerm, setSearchTerm] = useState("");
+export default function NetworkDirectory() {
+  const [activeTab, setActiveTab] = useState("institutions");
+  const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("Todos");
   const [disciplineFilter, setDisciplineFilter] = useState("Todos");
-  const [connectedIds, setConnectedIds] = useState([]);
-  const [showOnlyRecommended, setShowOnlyRecommended] = useState(false);
-  const [activeChannel, setActiveChannel] = useState("general-vocacional");
-  const [newPostText, setNewPostText] = useState("");
-  const [commentInputs, setCommentInputs] = useState({});
-  const [communityPosts, setCommunityPosts] = useState(() => {
-    const saved = localStorage.getItem("zynatra_community_posts");
-    if (saved) return JSON.parse(saved);
-    return [
-      {
-        id: "p_docentes",
-        channel: "sala-maestros-y-estudiantes",
-        autor: "Prof. Carlos Mendoza",
-        rol: "teacher",
-        badge: "Docente de Ciencias & Matemáticas",
-        avatar: "👨‍🏫",
-        tiempo: "Hace 10 min",
-        contenido: "¡Bienvenidos estudiantes! Esta sala está abierta para cualquier consulta académica, orientación sobre exámenes de admisión a universidades o consejos sobre materias científicas. ¿En qué temas les gustaría reforzar este trimestre?",
-        likes: 24,
-        comentarios: [
-          { autor: "Sofía Gutiérrez", rol: "student", texto: "¡Hola Profe Carlos! ¿Qué temas de física y álgebra vienen con más peso en el examen de admisión de la UNI?" },
-          { autor: "Prof. Carlos Mendoza", rol: "teacher", texto: "Hola Sofía. En la UNI el 40% del examen se centra en Trigonometría, Funciones y Física Mecánica (Cinemática y Dinámica). Les compartiré guías de estudio aquí en la plataforma." }
-        ]
-      },
-      {
-        id: "p_profesionales",
-        channel: "sala-profesionales-mentores",
-        autor: "Dra. Brenda Peralta",
-        rol: "teacher",
-        badge: "Mentora Verificada · Medicina & Salud Pública",
-        avatar: "👩‍⚕️",
-        tiempo: "Hace 25 min",
-        contenido: "Para los jóvenes interesados en las Ciencias de la Salud y Medicina: el camino requiere disciplina y vocación de servicio. ¿Tienen dudas sobre los años de internado, especialidades o campo laboral en Nicaragua?",
-        likes: 31,
-        comentarios: [
-          { autor: "Carlos Ruiz", rol: "student", texto: "Dra. Brenda, ¿cuántos años dura la especialización médica después de graduarse de Medicina General?" },
-          { autor: "Dra. Brenda Peralta", rol: "teacher", texto: "Hola Carlos. Tras 6 años de carrera general, la especialización dura entre 3 y 4 años adicionales dependiendo de la rama (Cirugía, Pediatría, Cardiología, etc.). ¡Vale 100% la pena!" }
-        ]
-      },
-      {
-        id: "p1",
-        channel: "software-y-tech",
-        autor: "Ing. Gabriel Torrez",
-        rol: "teacher",
-        badge: "Mentor Verificado · Software & IA",
-        avatar: "👨‍💻",
-        tiempo: "Hace 45 min",
-        contenido: "¡Hola a todos los futuros ingenieros y creadores de tecnología! Si te atrae la programación y la IA, te sugiero empezar explorando lógica y proyectos interactivos. ¿Alguien tiene dudas sobre carreras técnicas vs universitarias?",
-        likes: 18,
-        comentarios: [
-          { autor: "Mateo Silva", rol: "student", texto: "¡Hola Ing. Gabriel! ¿Qué diferencia hay entre estudiar Ingeniería en Sistemas en la UNI vs un técnico en INATEC?" },
-          { autor: "Ing. Gabriel Torrez", rol: "teacher", texto: "¡Excelente duda Mateo! En INATEC es 100% práctico e intensivo (2 años, rápida salida laboral). En la UNI dura 5 años y profundiza en arquitectura de software y matemáticas avanzadas." }
-        ]
-      },
-      {
-        id: "p2",
-        channel: "general-vocacional",
-        autor: "Dra. Elena Ramos",
-        rol: "admin",
-        badge: "Directora Zynatra",
-        avatar: "🏛️",
-        tiempo: "Hace 1 hora",
-        contenido: "Bienvenidos a la comunidad Zynatra. Recuerden completar su test de orientación psicométrica para descubrir las habilidades que definirán su futuro profesional.",
-        likes: 32,
-        comentarios: []
-      }
-    ];
+  const [cycle, setCycle] = useState("2027");
+  const [syncing, setSyncing] = useState(false);
+  const [detail, setDetail] = useState(null);
+
+  // Pre-matrícula local
+  const [preForm, setPreForm] = useState({ nombre: "", email: "", carrera: "", institucion: "" });
+  const [preList, setPreList] = useState(() => {
+    const saved = localStorage.getItem("zynatra_prematricula");
+    return saved ? JSON.parse(saved) : [];
   });
-
   useEffect(() => {
-    localStorage.setItem("zynatra_community_posts", JSON.stringify(communityPosts));
-  }, [communityPosts]);
+    localStorage.setItem("zynatra_prematricula", JSON.stringify(preList));
+  }, [preList]);
 
-  const handleCreatePost = (e) => {
+  const onlineNodes = useMemo(() => INSTITUTIONS.filter(i => i.status === "online").length, []);
+  const totalNodes = INSTITUTIONS.length;
+
+  const allCareers = useMemo(
+    () => INSTITUTIONS.flatMap(inst => (inst.carreras || []).map(c => ({ ...c, institucion: inst.siglas, instNombre: inst.nombre, logo: inst.logo }))),
+    []
+  );
+
+  const filteredInstitutions = useMemo(() => INSTITUTIONS.filter(inst => {
+    const q = search.toLowerCase();
+    const matchSearch = !q || inst.nombre.toLowerCase().includes(q) || inst.siglas.toLowerCase().includes(q) || inst.ubicacion.toLowerCase().includes(q);
+    const matchType = typeFilter === "Todos" || inst.tipo.includes(typeFilter);
+    return matchSearch && matchType;
+  }), [search, typeFilter]);
+
+  const filteredCareers = useMemo(() => allCareers.filter(c => {
+    const q = search.toLowerCase();
+    const matchSearch = !q || c.nombre.toLowerCase().includes(q) || c.facultad?.toLowerCase().includes(q) || c.institucion.toLowerCase().includes(q);
+    const matchDisc = disciplineFilter === "Todos" || c.disciplina === disciplineFilter;
+    return matchSearch && matchDisc;
+  }), [allCareers, search, disciplineFilter]);
+
+  const handleSync = () => {
+    setSyncing(true);
+    setTimeout(() => setSyncing(false), 1500);
+  };
+
+  const handlePreSubmit = (e) => {
     e.preventDefault();
-    if (!newPostText.trim()) return;
-
-    const newPost = {
-      id: "post_" + Date.now(),
-      channel: activeChannel,
-      autor: currentUser?.nombre || "Usuario Zynatra",
-      rol: currentUser?.rol || "student",
-      badge: currentUser?.rol === "admin" ? "Administrador Zynatra" : currentUser?.rol === "teacher" ? "Mentor / Profesional" : "Estudiante Explorador",
-      avatar: currentUser?.rol === "admin" ? "🏛️" : currentUser?.rol === "teacher" ? "👨‍🏫" : "🎓",
-      tiempo: "Justo ahora",
-      contenido: newPostText,
-      likes: 0,
-      comentarios: []
-    };
-
-    setCommunityPosts([newPost, ...communityPosts]);
-    setNewPostText("");
+    if (!preForm.nombre.trim() || !preForm.email.trim() || !preForm.carrera.trim()) return;
+    setPreList([{ ...preForm, id: "pre_" + Date.now(), fecha: new Date().toLocaleString("es-NI"), ciclo: cycle, estado: "Pre-Matrícula Confirmada" }, ...preList]);
+    setPreForm({ nombre: "", email: "", carrera: "", institucion: "" });
   };
 
-  const handleLikePost = (postId) => {
-    setCommunityPosts(communityPosts.map(p => p.id === postId ? { ...p, likes: p.likes + 1 } : p));
-  };
-
-  const handleAddComment = (postId) => {
-    const text = commentInputs[postId];
-    if (!text || !text.trim()) return;
-
-    setCommunityPosts(communityPosts.map(p => {
-      if (p.id === postId) {
-        return {
-          ...p,
-          comentarios: [
-            ...p.comentarios,
-            { autor: currentUser?.nombre || "Usuario", rol: currentUser?.rol || "student", texto: text }
-          ]
-        };
-      }
-      return p;
-    }));
-
-    setCommentInputs({ ...commentInputs, [postId]: "" });
-  };
-
-  const profileDiscipline = currentUser?.rol === "student"
-    ? getDisciplineFromProfile(studentInfo?.talentProfile)
-    : null;
-
-  useEffect(() => {
-    const savedDiscipline = sessionStorage.getItem("polaris_network_discipline");
-    if (savedDiscipline && DISCIPLINES.includes(savedDiscipline)) {
-      setDisciplineFilter(savedDiscipline);
-      setShowOnlyRecommended(true);
-      sessionStorage.removeItem("polaris_network_discipline");
-    }
-  }, []);
-
-  const handleConnect = (id) => {
-    if (connectedIds.includes(id)) return;
-    setConnectedIds([...connectedIds, id]);
-    alert("¡Solicitud de convenio enviada! La conexión académica se procesará con el orientador escolar.");
-  };
-
-  if (loading) return <div>Cargando red educativa...</div>;
-
-  const recommendedConnections = profileDiscipline
-    ? connections.filter(conn => conn.disciplina === profileDiscipline)
-    : [];
-
-  const filteredConnections = connections.filter(conn => {
-    const matchesSearch = conn.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      conn.descripcion.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = typeFilter === "Todos" || conn.tipo === typeFilter;
-    const matchesDiscipline = disciplineFilter === "Todos" || conn.disciplina === disciplineFilter;
-    const matchesRecommended = !showOnlyRecommended || conn.disciplina === profileDiscipline;
-
-    return matchesSearch && matchesType && matchesDiscipline && matchesRecommended;
-  });
-
-  const applyProfileFilter = () => {
-    if (!profileDiscipline) return;
-    setDisciplineFilter(profileDiscipline);
-    setShowOnlyRecommended(true);
-  };
+  const tabBtn = (id, icon, label, extra) => (
+    <button onClick={() => setActiveTab(id)} className={`btn ${activeTab === id ? "btn-secondary" : "btn-glass"}`} style={{ gap: "0.4rem" }}>
+      {icon} {label}{extra}
+    </button>
+  );
 
   return (
-    <div className="animate-fade-in" style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem" }}>
-        <div>
-          <h1 style={{ fontSize: "2.2rem", fontWeight: 800, letterSpacing: "-0.02em" }}>
-            Red de Conexión <span style={{ color: "#5bbfbf" }}>Académica & Comunidad</span>
-          </h1>
-          <p style={{ color: "var(--text-secondary)", marginTop: "0.25rem" }}>
-            Universidades, institutos técnicos, mentores en vivo y comunidad tipo Discord para tu futuro profesional.
-          </p>
+    <div className="animate-fade-in" style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+      {/* HEADER */}
+      <div>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.5rem" }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", background: "rgba(16,185,129,0.12)", color: "#10b981", padding: "0.3rem 0.75rem", borderRadius: "999px", fontSize: "0.7rem", fontWeight: 800, letterSpacing: "0.03em" }}>
+            <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#10b981", boxShadow: "0 0 8px #10b981" }} />
+            CONEXIÓN ACTIVA EN TIEMPO REAL
+          </span>
+          <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Sincronizado {new Date().toLocaleTimeString("es-NI", { hour: "2-digit", minute: "2-digit" })}</span>
         </div>
-        
-        {/* Live Connected Users Indicator */}
-        <div style={{
-          background: "#ffffff",
-          border: "1px solid rgba(0,0,0,0.08)",
-          padding: "0.5rem 1rem",
-          borderRadius: "20px",
-          display: "flex",
-          alignItems: "center",
-          gap: "0.5rem",
-          boxShadow: "0 4px 15px rgba(0,0,0,0.03)"
-        }}>
-          <span style={{ width: "10px", height: "10px", borderRadius: "50%", background: "#10b981", boxShadow: "0 0 8px #10b981" }} />
-          <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "#2d3436" }}>142 Usuarios Conectados en Vivo</span>
-        </div>
+        <h1 style={{ fontSize: "2.2rem", fontWeight: 800, letterSpacing: "-0.02em" }}>
+          Red Académica <span style={{ color: "#5bbfbf" }}>Universitaria &amp; Técnica</span>
+        </h1>
+        <p style={{ color: "var(--text-secondary)", marginTop: "0.35rem", maxWidth: "900px" }}>
+          Conexión directa y en tiempo real con universidades del CNU y colegios tecnológicos (INATEC).
+          Explora la oferta académica en curso ({cycle === "2027" ? "2027" : "2026"}) y asegura tu cupo para el <strong>Año Académico 2027</strong>.
+        </p>
       </div>
 
-      <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-        <button onClick={() => setViewMode("institutions")} className={`btn ${viewMode === "institutions" ? "btn-secondary" : "btn-glass"}`} style={{ gap: "0.4rem" }}>
-          <Network size={16} /> Instituciones
-        </button>
-        <button onClick={() => setViewMode("scholarships")} className={`btn ${viewMode === "scholarships" ? "btn-accent" : "btn-glass"}`} style={{ gap: "0.4rem" }}>
-          <Award size={16} /> Becas y Oportunidades
-        </button>
-        <button onClick={() => setViewMode("discord")} className={`btn ${viewMode === "discord" ? "btn-primary" : "btn-glass"}`} style={{ gap: "0.4rem" }}>
-          <Sparkles size={16} /> 💬 Comunidad Zynatra (Discord Hub)
-        </button>
-        <button onClick={() => setViewMode("articles")} className={`btn ${viewMode === "articles" ? "btn-secondary" : "btn-glass"}`} style={{ gap: "0.4rem" }}>
-          📰 Artículos & Guías
-        </button>
-      </div>
-
-      {viewMode === "articles" ? (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "1.5rem" }}>
-          {[
-            {
-              id: "art1",
-              titulo: "Cómo prepararte para el mercado laboral de Inteligencia Artificial y Desarrollo de Software",
-              autor: "Ing. Gabriel Torrez",
-              rol: "Mentor Tech & Desarrollador Senior",
-              minutos: "5 min de lectura",
-              resumen: "Conoce las tecnologías más demandadas en América Latina y cómo construir un portafolio relevante desde tus años escolares.",
-              icono: "💻"
-            },
-            {
-              id: "art2",
-              titulo: "El futuro de las Energías Renovables y la Agronomía Sostenible en Nicaragua",
-              autor: "Dra. Elena Ramos",
-              rol: "Bióloga & Investigadora Ambiental",
-              minutos: "4 min de lectura",
-              resumen: "Descubre los proyectos de conservación de ecosistemas y cómo la tecnología se une con las ciencias de la tierra.",
-              icono: "🌱"
-            },
-            {
-              id: "art3",
-              titulo: "Guía de Diseño de Experiencia de Usuario (UX/UI) para Creativos Digitales",
-              autor: "Lic. Roberto Ruiz",
-              rol: "Diseñador Senior & Animador 3D",
-              minutos: "6 min de lectura",
-              resumen: "Pasos fundamentales para transformar tu pasión artística en una carrera lucrativa y de alta demanda global.",
-              icono: "🎨"
-            }
-          ].map(art => (
-            <div key={art.id} className="glass-card" style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span style={{ fontSize: "2rem" }}>{art.icono}</span>
-                <span className="badge badge-glass" style={{ fontSize: "0.75rem" }}>{art.minutos}</span>
-              </div>
-              <div>
-                <h3 style={{ fontSize: "1.1rem", fontWeight: 700, lineHeight: "1.3" }}>{art.titulo}</h3>
-                <p style={{ fontSize: "0.8rem", color: "#5bbfbf", fontWeight: 600, marginTop: "0.3rem" }}>Por {art.autor} · {art.rol}</p>
-              </div>
-              <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: "1.5" }}>
-                {art.resumen}
-              </p>
-              <div style={{ marginTop: "auto", paddingTop: "0.75rem", borderTop: "1px solid var(--border-glass)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <button onClick={() => alert(`Lectura del artículo: "${art.titulo}". ¡Artículo marcado como leído!`)} className="btn btn-primary" style={{ padding: "0.4rem 0.85rem", fontSize: "0.8rem" }}>
-                  Leer Artículo Completo
-                </button>
-                <a
-                  href="https://www.linkedin.com/sharing/share-offsite/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ color: "#0077b5", fontSize: "0.8rem", textDecoration: "none", fontWeight: 600 }}
-                >
-                  Compartir en LinkedIn
-                </a>
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : viewMode === "discord" ? (
-        <div style={{ display: "grid", gridTemplateColumns: "240px 1fr", gap: "1.5rem", minHeight: "500px" }}>
-          {/* Discord Channels Sidebar */}
-          <div className="glass-panel" style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
-            <h3 style={{ fontSize: "0.85rem", fontWeight: 800, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-              CANALES DE COMUNIDAD
-            </h3>
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
-              {[
-                { id: "sala-maestros-y-estudiantes", label: "# maestros-y-estudiantes", icon: "👨‍🏫" },
-                { id: "sala-profesionales-mentores", label: "# profesionales-mentores", icon: "👩‍⚕️" },
-                { id: "general-vocacional", label: "# orientacion-general", icon: "💬" },
-                { id: "software-y-tech", label: "# software-y-tech", icon: "💻" },
-                { id: "ingenieria-y-futuro", label: "# ingenieria-y-futuro", icon: "⚙️" },
-                { id: "arte-y-diseno", label: "# arte-y-diseno", icon: "🎨" }
-              ].map(ch => (
-                <button
-                  key={ch.id}
-                  onClick={() => setActiveChannel(ch.id)}
-                  className={`btn ${activeChannel === ch.id ? "btn-primary" : "btn-glass"}`}
-                  style={{ justifyContent: "flex-start", padding: "0.6rem 0.85rem", fontSize: "0.85rem" }}
-                >
-                  <span>{ch.icon}</span>
-                  <span>{ch.label}</span>
-                </button>
-              ))}
-            </div>
-
-            <div style={{ marginTop: "auto", paddingTop: "1rem", borderTop: "1px solid var(--border-glass)", fontSize: "0.75rem", color: "var(--text-muted)" }}>
-              <p style={{ fontWeight: 700, color: "var(--text-primary)", marginBottom: "0.25rem" }}>Comunidad Zynatra</p>
-              <p>Conecta con mentores profesionales y estudiantes en tiempo real.</p>
-            </div>
-          </div>
-
-          {/* Discord Main Chat Feed */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
-            {/* Create Post Card */}
-            <form onSubmit={handleCreatePost} className="glass-panel" style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.85rem" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                <span style={{ fontSize: "1.5rem" }}>{currentUser?.rol === "admin" ? "🏛️" : currentUser?.rol === "teacher" ? "👨‍🏫" : "🎓"}</span>
-                <div>
-                  <p style={{ fontSize: "0.9rem", fontWeight: 700 }}>
-                    {currentUser?.nombre || "Usuario"} <span style={{ color: "var(--primary)", fontSize: "0.75rem", fontWeight: 600 }}>#{activeChannel}</span>
-                  </p>
-                  <p style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Publicar una pregunta o experiencia para la comunidad</p>
-                </div>
-              </div>
-              <textarea
-                className="input-field"
-                rows="3"
-                placeholder={`Escribe un mensaje o pregunta en #${activeChannel}...`}
-                value={newPostText}
-                onChange={e => setNewPostText(e.target.value)}
-                style={{ resize: "vertical" }}
-              />
-              <button type="submit" className="btn btn-primary" style={{ alignSelf: "flex-end", padding: "0.5rem 1.25rem", fontSize: "0.85rem" }}>
-                Publicar Mensaje
-              </button>
-            </form>
-
-            {/* Message Feed */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-              {communityPosts.filter(p => p.channel === activeChannel || activeChannel === "general-vocacional").map(post => (
-                <div key={post.id} className="glass-card" style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                    <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
-                      <span style={{ fontSize: "1.75rem" }}>{post.avatar}</span>
-                      <div>
-                        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                          <span style={{ fontWeight: 800, fontSize: "0.95rem" }}>{post.autor}</span>
-                          <span className={`badge ${post.rol === "admin" ? "badge-warning" : post.rol === "teacher" ? "badge-accent" : "badge-secondary"}`} style={{ fontSize: "0.65rem" }}>
-                            {post.badge}
-                          </span>
-                        </div>
-                        <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>{post.tiempo}</span>
-                      </div>
-                    </div>
-                    <button onClick={() => handleLikePost(post.id)} className="btn btn-glass" style={{ padding: "0.3rem 0.65rem", fontSize: "0.75rem", gap: "0.3rem" }}>
-                      ❤️ {post.likes}
-                    </button>
-                  </div>
-
-                  <p style={{ fontSize: "0.9rem", lineHeight: "1.5", color: "var(--text-primary)" }}>
-                    {post.contenido}
-                  </p>
-
-                  {/* Comments Thread */}
-                  {post.comentarios.length > 0 && (
-                    <div style={{ display: "flex", flexDirection: "column", gap: "0.6rem", background: "rgba(0,0,0,0.2)", padding: "0.85rem", borderRadius: "8px" }}>
-                      {post.comentarios.map((c, idx) => (
-                        <div key={idx} style={{ fontSize: "0.82rem", lineHeight: "1.4" }}>
-                          <strong style={{ color: c.rol === "teacher" ? "#34d399" : "#a78bfa" }}>{c.autor}:</strong> {" "}
-                          <span style={{ color: "var(--text-secondary)" }}>{c.texto}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Comment Input */}
-                  <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.25rem" }}>
-                    <input
-                      type="text"
-                      className="input-field"
-                      placeholder="Escribir una respuesta..."
-                      value={commentInputs[post.id] || ""}
-                      onChange={e => setCommentInputs({ ...commentInputs, [post.id]: e.target.value })}
-                      onKeyDown={e => e.key === "Enter" && handleAddComment(post.id)}
-                      style={{ padding: "0.4rem 0.85rem", fontSize: "0.8rem" }}
-                    />
-                    <button onClick={() => handleAddComment(post.id)} className="btn btn-glass" style={{ padding: "0.4rem 0.85rem", fontSize: "0.8rem" }}>
-                      Responder
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      ) : viewMode === "scholarships" ? (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "1.5rem" }}>
-          {SCHOLARSHIPS.filter(s => !profileDiscipline || s.disciplina === "Todos" || s.disciplina === profileDiscipline).map(beca => (
-            <div key={beca.id} className="glass-card" style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-              <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
-                <span style={{ fontSize: "2rem" }}>{beca.icono}</span>
-                <div>
-                  <span className="badge badge-accent" style={{ fontSize: "0.65rem" }}>{beca.monto}</span>
-                  <h4 style={{ fontWeight: 700, fontSize: "1rem", marginTop: "0.35rem" }}>{beca.titulo}</h4>
-                  <p style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{beca.institucion}</p>
-                </div>
-              </div>
-              <ul style={{ fontSize: "0.85rem", color: "var(--text-secondary)", paddingLeft: "1.25rem" }}>
-                {beca.requisitos.map((r, i) => <li key={i} style={{ marginBottom: "0.25rem" }}>{r}</li>)}
-              </ul>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontSize: "0.8rem", color: "var(--warning)" }}>
-                <Calendar size={14} /> Cierre: {beca.fechaLimite}
-              </div>
-              <button onClick={() => alert("¡Postulación registrada! Tu orientador escolar te contactará.")} className="btn btn-glass" style={{ alignSelf: "flex-start", fontSize: "0.8rem" }}>
-                Me interesa esta beca
-              </button>
-            </div>
-          ))}
-        </div>
-      ) : (
-      <>
-      {profileDiscipline && (
-        <div className="glass-panel" style={{
-          padding: "1.5rem",
-          background: "linear-gradient(135deg, rgba(139, 92, 246, 0.12) 0%, rgba(6, 182, 212, 0.05) 100%)",
-          border: "1px solid rgba(139, 92, 246, 0.25)",
-          display: "flex",
-          gap: "1.25rem",
-          alignItems: "center",
-          flexWrap: "wrap"
-        }}>
-          <div style={{
-            background: "rgba(139, 92, 246, 0.2)",
-            padding: "0.85rem",
-            borderRadius: "50%",
-            border: "1px solid rgba(139, 92, 246, 0.3)"
-          }}>
-            <Compass size={28} style={{ color: "#a78bfa" }} />
-          </div>
-          <div style={{ flex: 1, minWidth: "220px" }}>
-            <h3 style={{ fontSize: "1.1rem", fontWeight: 800 }}>
-              {studentInfo.talentProfile.perfilTop}
-            </h3>
-            <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem", marginTop: "0.25rem" }}>
-              Según tu test vocacional, te recomendamos instituciones en <strong>{profileDiscipline}</strong>.
-              {recommendedConnections.length > 0 && ` Hay ${recommendedConnections.length} opciones en Nicaragua.`}
+      {/* NODE STATUS */}
+      <div className="glass-panel" style={{ padding: "1rem 1.25rem", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.9rem" }}>
+          <Wifi size={22} style={{ color: "#10b981" }} />
+          <div>
+            <p style={{ fontSize: "0.75rem", fontWeight: 800, color: "var(--text-muted)", letterSpacing: "0.05em" }}>NODO CENTRAL CNU-MANAGUA</p>
+            <p style={{ fontSize: "1.15rem", fontWeight: 800 }}>
+              <span style={{ color: "#10b981" }}>{onlineNodes}/{totalNodes} Nodos</span>
+              <span style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginLeft: "0.6rem" }}>100% En Línea</span>
             </p>
           </div>
-          <button onClick={applyProfileFilter} className="btn btn-primary" style={{ gap: "0.5rem" }}>
-            <Sparkles size={16} />
-            Ver recomendadas
-          </button>
         </div>
-      )}
-
-      {!profileDiscipline && currentUser?.rol === "student" && (
-        <div className="glass-panel" style={{
-          padding: "1.25rem",
-          display: "flex",
-          gap: "1rem",
-          alignItems: "center",
-          flexWrap: "wrap",
-          border: "1px dashed var(--border-glass)"
-        }}>
-          <GraduationCap size={24} style={{ color: "var(--primary)" }} />
-          <p style={{ flex: 1, color: "var(--text-secondary)", fontSize: "0.9rem" }}>
-            Completa el test de orientación vocacional para recibir recomendaciones personalizadas de instituciones nicaragüenses.
-          </p>
-          {setActiveTab && (
-            <button onClick={() => setActiveTab("vocational")} className="btn btn-glass" style={{ fontSize: "0.85rem" }}>
-              Ir al test vocacional
-            </button>
-          )}
-        </div>
-      )}
-
-      <div className="glass-panel" style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1.25rem" }}>
-        <div style={{ position: "relative" }}>
-          <Search size={18} style={{
-            position: "absolute",
-            left: "1rem",
-            top: "50%",
-            transform: "translateY(-50%)",
-            color: "var(--text-muted)"
-          }} />
-          <input
-            type="text"
-            className="input-field"
-            placeholder="Buscar universidades o institutos en Nicaragua..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{ paddingLeft: "2.75rem" }}
-          />
-        </div>
-
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "1.5rem" }}>
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-            <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontWeight: 700, textTransform: "uppercase" }}>
-              Tipo de Institución
-            </span>
-            <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-              {["Todos", "Universidad", "Instituto Técnico"].map(type => (
-                <button
-                  key={type}
-                  onClick={() => setTypeFilter(type)}
-                  className={`btn ${typeFilter === type ? "btn-secondary" : "btn-glass"}`}
-                  style={{ padding: "0.4rem 1rem", fontSize: "0.8rem", borderRadius: "20px" }}
-                >
-                  {type}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-            <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontWeight: 700, textTransform: "uppercase" }}>
-              Disciplina Clave
-            </span>
-            <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-              {["Todos", ...DISCIPLINES].map(discipline => (
-                <button
-                  key={discipline}
-                  onClick={() => {
-                    setDisciplineFilter(discipline);
-                    if (discipline === "Todos") setShowOnlyRecommended(false);
-                  }}
-                  className={`btn ${
-                    disciplineFilter === discipline
-                      ? (discipline === "Todos" ? "btn-secondary" : getDisciplineButtonClass(discipline))
-                      : "btn-glass"
-                  }`}
-                  style={{ padding: "0.4rem 1rem", fontSize: "0.8rem", borderRadius: "20px" }}
-                >
-                  {discipline}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {profileDiscipline && (
-          <label style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "0.5rem",
-            fontSize: "0.85rem",
-            color: "var(--text-secondary)",
-            cursor: "pointer"
-          }}>
-            <input
-              type="checkbox"
-              checked={showOnlyRecommended}
-              onChange={(e) => setShowOnlyRecommended(e.target.checked)}
-              style={{ accentColor: "var(--primary)" }}
-            />
-            Mostrar solo instituciones recomendadas para mi perfil ({profileDiscipline})
-          </label>
-        )}
+        <button onClick={handleSync} className="btn btn-glass" style={{ gap: "0.4rem" }}>
+          <RefreshCw size={16} className={syncing ? "spin" : ""} /> {syncing ? "Sincronizando..." : "Sincronizar Nodos"}
+        </button>
       </div>
 
-      {profileDiscipline && recommendedConnections.length > 0 && !showOnlyRecommended && disciplineFilter === "Todos" && (
-        <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-            <Network size={20} style={{ color: "var(--primary)" }} />
-            <h3 style={{ fontSize: "1.25rem", fontWeight: 800 }}>Destacadas para ti</h3>
+      {/* NEWS BANNER */}
+      <div className="glass-panel" style={{ padding: "1rem 1.25rem", display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap", border: "1px solid rgba(139,92,246,0.25)" }}>
+        <span style={{ background: "linear-gradient(135deg,#8b5cf6,#6d28d9)", color: "#fff", fontWeight: 800, fontSize: "0.7rem", padding: "0.5rem 0.7rem", borderRadius: "10px", textAlign: "center", lineHeight: 1.1 }}>
+          EN<br />VIVO<br />CNU
+        </span>
+        <div style={{ flex: 1, minWidth: "220px" }}>
+          <p style={{ fontSize: "0.9rem" }}>
+            <strong>Bicentenario UNAN-León:</strong> Calendario de Admisión en León, CUR Somoto y Jinotega Ciclo 2027 — Publicado el calendario oficial para Medicina, Odontología, Farmacia y Telemática en los recintos de occidente y el norte del país.
+          </p>
+        </div>
+        <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Hace 25 minutos</span>
+        <button onClick={() => setActiveTab("calendar")} className="btn btn-glass" style={{ gap: "0.3rem", fontSize: "0.8rem" }}>
+          Revisar Calendario <ChevronRight size={14} />
+        </button>
+      </div>
+
+      {/* CONVOCATORIA */}
+      <div className="glass-panel" style={{ padding: "1.5rem", background: "linear-gradient(135deg, rgba(16,185,129,0.08) 0%, rgba(6,182,212,0.05) 100%)" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+            <span style={{ fontSize: "2rem" }}>🚀</span>
+            <div>
+              <h3 style={{ fontSize: "1.3rem", fontWeight: 800 }}>
+                {cycle === "2027" ? "Convocatoria & Admisión: Año Académico 2027" : "Ciclo Actual: Año Académico 2026"}
+              </h3>
+              <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem", marginTop: "0.2rem" }}>
+                Estamos en el 2026 preparándote para ingresar a la universidad o instituto técnico en 2027. Más de 74,800 cupos con 100% de gratuidad.
+              </p>
+            </div>
           </div>
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
-            gap: "1.5rem"
-          }}>
-            {recommendedConnections.slice(0, 2).map(conn => (
-              <InstitutionCard
-                key={`rec-${conn.id}`}
-                conn={conn}
-                isConnected={connectedIds.includes(conn.id)}
-                isRecommended
-                onConnect={handleConnect}
-              />
+          <span className="badge badge-accent" style={{ fontSize: "0.7rem" }}>
+            {cycle === "2027" ? "PRE-MATRÍCULA ABIERTA" : "SEGUNDO SEMESTRE"}
+          </span>
+        </div>
+        <div style={{ display: "flex", gap: "0.5rem", marginTop: "1.25rem" }}>
+          <button onClick={() => setCycle("2027")} className={`btn ${cycle === "2027" ? "btn-primary" : "btn-glass"}`} style={{ gap: "0.4rem" }}>
+            <Sparkles size={14} /> Año Académico 2027
+          </button>
+          <button onClick={() => setCycle("2026")} className={`btn ${cycle === "2026" ? "btn-secondary" : "btn-glass"}`} style={{ gap: "0.4rem" }}>
+            <Clock size={14} /> Año 2026 (En Curso)
+          </button>
+        </div>
+      </div>
+
+      {/* TABS */}
+      <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+        {tabBtn("institutions", <Network size={16} />, <>Universidades &amp; Colegios Técnicos ({INSTITUTIONS.length})</>)}
+        {tabBtn("careers", <GraduationCap size={16} />, <>Oferta de Carreras ({TOTAL_CAREERS})</>)}
+        {tabBtn("prematricula", <CheckCircle size={16} />, <>Pre-Matrícula 2027 {preList.length > 0 && `(${preList.length})`}</>)}
+        {tabBtn("calendar", <Calendar size={16} />, "Calendario CNU 2026-2027")}
+        {tabBtn("scholarships", <Award size={16} />, "Becas & Gratuidad")}
+        {tabBtn("salas", <Users size={16} />, "Salas en Vivo")}
+        {tabBtn("articles", <BookOpen size={16} />, "Guías")}
+      </div>
+
+      {/* ===== INSTITUTIONS ===== */}
+      {activeTab === "institutions" && (
+        <>
+          <div className="glass-panel" style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
+            <div style={{ position: "relative" }}>
+              <Search size={18} style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
+              <input className="input-field" placeholder="Buscar universidades o institutos en Nicaragua..." value={search} onChange={e => setSearch(e.target.value)} style={{ paddingLeft: "2.75rem" }} />
+            </div>
+            <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+              {["Todos", "Universidad", "Instituto"].map(t => (
+                <button key={t} onClick={() => setTypeFilter(t)} className={`btn ${typeFilter === t ? "btn-secondary" : "btn-glass"}`} style={{ padding: "0.4rem 1rem", fontSize: "0.8rem", borderRadius: "20px" }}>{t}</button>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: "1.25rem" }}>
+            {filteredInstitutions.map(inst => (
+              <div key={inst.id} className="glass-card" style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
+                <div style={{ display: "flex", gap: "0.9rem", alignItems: "center" }}>
+                  <span style={{ fontSize: "2rem" }}>{inst.logo}</span>
+                  <div style={{ flex: 1 }}>
+                    <span className="badge badge-secondary" style={{ fontSize: "0.62rem" }}>{inst.tipo}</span>
+                    <h4 style={{ fontSize: "1rem", fontWeight: 700, marginTop: "0.25rem", lineHeight: 1.3 }}>{inst.nombre}</h4>
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", fontSize: "0.72rem" }}>
+                  <span className="badge badge-glass" style={{ color: "#10b981" }}>
+                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#10b981", display: "inline-block", marginRight: 4 }} />
+                    {inst.status === "online" ? "Nodo en línea" : "Offline"} · {inst.pingMs}ms
+                  </span>
+                  <span className="badge badge-glass">{inst.carreras?.length || 0} carreras</span>
+                </div>
+                <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", display: "flex", alignItems: "center", gap: "0.35rem" }}>
+                  <Server size={13} /> {inst.serverNode}
+                </p>
+                <p style={{ fontSize: "0.82rem", color: "var(--text-secondary)", display: "flex", alignItems: "center", gap: "0.35rem" }}>
+                  <MapPin size={13} /> {inst.ubicacion}
+                </p>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid var(--border-glass)", paddingTop: "0.75rem" }}>
+                  <span style={{ fontSize: "0.78rem", color: "var(--text-secondary)" }}>
+                    <strong style={{ color: "var(--primary)" }}>{inst.totalCupos2027?.toLocaleString()}</strong> cupos 2027
+                  </span>
+                  <button onClick={() => setDetail(inst)} className="btn btn-glass" style={{ padding: "0.4rem 0.85rem", fontSize: "0.78rem", gap: "0.25rem" }}>
+                    Ver detalles <ChevronRight size={13} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      {/* ===== CAREERS ===== */}
+      {activeTab === "careers" && (
+        <>
+          <div className="glass-panel" style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
+            <div style={{ position: "relative" }}>
+              <Search size={18} style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
+              <input className="input-field" placeholder="Buscar entre 246 carreras..." value={search} onChange={e => setSearch(e.target.value)} style={{ paddingLeft: "2.75rem" }} />
+            </div>
+            <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+              {DISCIPLINES.map(d => (
+                <button key={d} onClick={() => setDisciplineFilter(d)} className={`btn ${disciplineFilter === d ? "btn-secondary" : "btn-glass"}`} style={{ padding: "0.4rem 1rem", fontSize: "0.8rem", borderRadius: "20px" }}>{d}</button>
+              ))}
+            </div>
+          </div>
+          <p style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--text-secondary)" }}>Oferta académica ({filteredCareers.length})</p>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "1rem" }}>
+            {filteredCareers.slice(0, 120).map(c => (
+              <div key={c.id} className="glass-card" style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontSize: "1.4rem" }}>{c.logo}</span>
+                  <span className="badge badge-glass" style={{ fontSize: "0.62rem" }}>{c.institucion}</span>
+                </div>
+                <h4 style={{ fontSize: "0.95rem", fontWeight: 700 }}>{c.nombre}</h4>
+                <p style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>{c.facultad}</p>
+                <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap", marginTop: "0.25rem" }}>
+                  <span className="badge badge-secondary" style={{ fontSize: "0.62rem" }}>{c.disciplina}</span>
+                  <span className="badge badge-glass" style={{ fontSize: "0.62rem" }}>{c.duracion}</span>
+                </div>
+                <p style={{ fontSize: "0.72rem", color: "#10b981", fontWeight: 700 }}>{c.cuposDisponibles2027} cupos disponibles 2027</p>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      {/* ===== PRE-MATRICULA ===== */}
+      {activeTab === "prematricula" && (
+        <div style={{ display: "grid", gridTemplateColumns: "minmax(300px, 420px) 1fr", gap: "1.5rem" }}>
+          <form onSubmit={handlePreSubmit} className="glass-panel" style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1rem", height: "fit-content" }}>
+            <h3 style={{ fontSize: "1.15rem", fontWeight: 800 }}>Expediente de Admisión 2027</h3>
+            <input className="input-field" placeholder="Nombre completo" value={preForm.nombre} onChange={e => setPreForm({ ...preForm, nombre: e.target.value })} />
+            <input className="input-field" type="email" placeholder="Correo electrónico" value={preForm.email} onChange={e => setPreForm({ ...preForm, email: e.target.value })} />
+            <input className="input-field" placeholder="Carrera deseada" value={preForm.carrera} onChange={e => setPreForm({ ...preForm, carrera: e.target.value })} />
+            <input className="input-field" placeholder="Institución (opcional)" value={preForm.institucion} onChange={e => setPreForm({ ...preForm, institucion: e.target.value })} />
+            <button type="submit" className="btn btn-primary">Confirmar Pre-Matrícula en Línea</button>
+          </form>
+          <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+            <h3 style={{ fontSize: "1.1rem", fontWeight: 800 }}>Mis pre-matrículas ({preList.length})</h3>
+            {preList.length === 0 ? (
+              <div className="glass-card" style={{ padding: "2rem", textAlign: "center", color: "var(--text-secondary)" }}>Aún no registraste ninguna pre-matrícula.</div>
+            ) : preList.map(p => (
+              <div key={p.id} className="glass-card" style={{ padding: "1rem", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "1rem" }}>
+                <div>
+                  <p style={{ fontWeight: 700 }}>{p.carrera}</p>
+                  <p style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{p.nombre} · {p.email} {p.institucion && `· ${p.institucion}`}</p>
+                  <p style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>{p.fecha}</p>
+                </div>
+                <span className="badge badge-accent" style={{ fontSize: "0.65rem" }}>{p.estado}</span>
+              </div>
             ))}
           </div>
         </div>
       )}
 
-      {filteredConnections.length === 0 ? (
-        <div className="glass-card" style={{ textAlign: "center", padding: "3rem" }}>
-          <p style={{ color: "var(--text-secondary)" }}>No se encontraron instituciones con los filtros seleccionados.</p>
-        </div>
-      ) : (
+      {/* ===== CALENDAR ===== */}
+      {activeTab === "calendar" && (
         <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-          <h3 style={{ fontSize: "1.15rem", fontWeight: 800 }}>
-            {showOnlyRecommended ? "Instituciones recomendadas" : "Todas las instituciones"}
-            <span style={{ color: "var(--text-muted)", fontWeight: 600, fontSize: "0.9rem", marginLeft: "0.5rem" }}>
-              ({filteredConnections.length})
-            </span>
-          </h3>
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
-            gap: "1.5rem"
-          }}>
-            {filteredConnections.map(conn => (
-              <InstitutionCard
-                key={conn.id}
-                conn={conn}
-                isConnected={connectedIds.includes(conn.id)}
-                isRecommended={profileDiscipline === conn.disciplina}
-                onConnect={handleConnect}
-              />
-            ))}
-          </div>
+          {ADMISSION_PHASES.map((f, i) => (
+            <div key={i} className="glass-card" style={{ display: "flex", gap: "1rem", alignItems: "flex-start", borderLeft: `4px solid ${f.color}` }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", flexWrap: "wrap" }}>
+                  <h4 style={{ fontSize: "1rem", fontWeight: 800 }}>{f.fase}</h4>
+                  <span className="badge" style={{ fontSize: "0.62rem", background: f.color, color: "#fff" }}>{f.estado}</span>
+                </div>
+                <p style={{ fontSize: "0.82rem", color: "var(--primary)", fontWeight: 700, margin: "0.25rem 0" }}>{f.periodo}</p>
+                <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>{f.descripcion}</p>
+              </div>
+            </div>
+          ))}
         </div>
       )}
-      </>
+
+      {/* ===== SCHOLARSHIPS ===== */}
+      {activeTab === "scholarships" && (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "1.5rem" }}>
+          {SCHOLARSHIPS.map(b => (
+            <div key={b.id} className="glass-card" style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
+              <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+                <span style={{ fontSize: "2rem" }}>{b.icono}</span>
+                <div>
+                  <span className="badge badge-accent" style={{ fontSize: "0.62rem" }}>{b.monto}</span>
+                  <h4 style={{ fontWeight: 700, fontSize: "0.95rem", marginTop: "0.3rem" }}>{b.titulo}</h4>
+                  <p style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>{b.institucion}</p>
+                </div>
+              </div>
+              <ul style={{ fontSize: "0.82rem", color: "var(--text-secondary)", paddingLeft: "1.25rem" }}>
+                {b.requisitos.map((r, i) => <li key={i}>{r}</li>)}
+              </ul>
+              <p style={{ fontSize: "0.78rem", color: "var(--warning)", display: "flex", alignItems: "center", gap: "0.35rem" }}>
+                <Calendar size={13} /> Cierre: {b.fechaLimite}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ===== SALAS EN VIVO ===== */}
+      {activeTab === "salas" && (
+        <div className="glass-card" style={{ padding: "2rem", textAlign: "center" }}>
+          <Users size={40} style={{ color: "var(--primary)", margin: "0 auto 1rem" }} />
+          <h3 style={{ fontSize: "1.2rem", fontWeight: 800 }}>Salas en Vivo de Orientación</h3>
+          <p style={{ color: "var(--text-secondary)", marginTop: "0.5rem" }}>
+            Conecta con mentores profesionales y orientadores del CNU en tiempo real. Iniciá sesión para unirte a las salas abiertas.
+          </p>
+        </div>
+      )}
+
+      {/* ===== ARTICLES / GUIDES ===== */}
+      {activeTab === "articles" && (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "1.5rem" }}>
+          {[
+            { icono: "💻", titulo: "Cómo prepararte para el mercado laboral de IA y Desarrollo de Software", autor: "Ing. Gabriel Torrez", resumen: "Las tecnologías más demandadas en América Latina y cómo construir un portafolio desde el colegio." },
+            { icono: "🌱", titulo: "El futuro de las Energías Renovables y la Agronomía Sostenible", autor: "Dra. Elena Ramos", resumen: "Proyectos de conservación y cómo la tecnología se une con las ciencias de la tierra." },
+            { icono: "🎨", titulo: "Guía de UX/UI para Creativos Digitales", autor: "Lic. Roberto Ruiz", resumen: "Pasos para transformar tu pasión artística en una carrera de alta demanda global." }
+          ].map((a, i) => (
+            <div key={i} className="glass-card" style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+              <span style={{ fontSize: "2rem" }}>{a.icono}</span>
+              <h3 style={{ fontSize: "1.05rem", fontWeight: 700, lineHeight: 1.3 }}>{a.titulo}</h3>
+              <p style={{ fontSize: "0.8rem", color: "#5bbfbf", fontWeight: 600 }}>Por {a.autor}</p>
+              <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>{a.resumen}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ===== DETAIL MODAL ===== */}
+      {detail && (
+        <div onClick={() => setDetail(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", padding: "1.5rem", zIndex: 1000 }}>
+          <div onClick={e => e.stopPropagation()} className="glass-panel" style={{ background: "#fff", maxWidth: "760px", width: "100%", maxHeight: "88vh", overflowY: "auto", padding: "1.75rem" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "1rem" }}>
+              <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+                <span style={{ fontSize: "2.5rem" }}>{detail.logo}</span>
+                <div>
+                  <span className="badge badge-secondary" style={{ fontSize: "0.62rem" }}>{detail.tipo}</span>
+                  <h3 style={{ fontSize: "1.3rem", fontWeight: 800, marginTop: "0.3rem" }}>{detail.nombre}</h3>
+                </div>
+              </div>
+              <button onClick={() => setDetail(null)} className="btn btn-glass" style={{ padding: "0.4rem" }}><X size={18} /></button>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem", margin: "1.25rem 0", fontSize: "0.85rem" }}>
+              <p><strong>Nodo:</strong> {detail.serverNode}</p>
+              <p><strong>Estado:</strong> <span style={{ color: "#10b981" }}>{detail.status}</span> · {detail.pingMs}ms · {detail.uptime}</p>
+              <p><strong>Ubicación:</strong> {detail.ubicacion}</p>
+              <p><strong>Cupos 2027:</strong> {detail.totalCupos2027?.toLocaleString()} ({detail.admision2027Estado})</p>
+            </div>
+
+            <p style={{ fontSize: "0.9rem", color: "var(--text-secondary)", marginBottom: "1rem" }}>{detail.descripcion}</p>
+
+            <h4 style={{ fontWeight: 800, marginBottom: "0.5rem" }}>Fechas clave 2027</h4>
+            <ul style={{ fontSize: "0.85rem", color: "var(--text-secondary)", paddingLeft: "1.25rem", marginBottom: "1rem" }}>
+              {detail.fechasClave2027 && Object.entries(detail.fechasClave2027).map(([k, v]) => <li key={k}><strong>{k}:</strong> {v}</li>)}
+            </ul>
+
+            <h4 style={{ fontWeight: 800, marginBottom: "0.5rem" }}>Sedes ({detail.sedes?.length || 0})</h4>
+            <ul style={{ fontSize: "0.82rem", color: "var(--text-secondary)", paddingLeft: "1.25rem", marginBottom: "1rem" }}>
+              {detail.sedes?.map((s, i) => <li key={i}>{s}</li>)}
+            </ul>
+
+            <h4 style={{ fontWeight: 800, marginBottom: "0.5rem" }}>Carreras ({detail.carreras?.length || 0})</h4>
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+              {detail.carreras?.map(c => (
+                <div key={c.id} style={{ display: "flex", justifyContent: "space-between", gap: "1rem", fontSize: "0.82rem", borderBottom: "1px solid var(--border-glass)", paddingBottom: "0.35rem" }}>
+                  <span>{c.nombre} <span style={{ color: "var(--text-muted)" }}>· {c.duracion}</span></span>
+                  <span style={{ color: "#10b981", fontWeight: 700, whiteSpace: "nowrap" }}>{c.cuposDisponibles2027} cupos</span>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ display: "flex", gap: "0.75rem", marginTop: "1.5rem" }}>
+              <a href={detail.portalUrl} target="_blank" rel="noopener noreferrer" className="btn btn-primary" style={{ gap: "0.4rem" }}><Building2 size={15} /> Portal oficial</a>
+              <a href={detail.admisionUrl} target="_blank" rel="noopener noreferrer" className="btn btn-glass" style={{ gap: "0.4rem" }}><Activity size={15} /> Admisión</a>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
