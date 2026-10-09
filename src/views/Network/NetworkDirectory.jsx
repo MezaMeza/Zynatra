@@ -12,6 +12,7 @@ import {
   GraduationCap,
   CheckCircle,
   ChevronRight,
+  ChevronLeft,
   Server,
   Activity,
   Sparkles,
@@ -24,6 +25,7 @@ import { INSTITUTIONS, ADMISSION_PHASES, TOTAL_CAREERS } from "../../data/academ
 import { SCHOLARSHIPS } from "../../data/scholarships";
 
 const DISCIPLINES = ["Todos", "Ecología", "Tecnología", "Ingeniería", "Arte"];
+const PAGE_SIZE = 6;
 
 export default function NetworkDirectory() {
   const [activeTab, setActiveTab] = useState("institutions");
@@ -32,11 +34,10 @@ export default function NetworkDirectory() {
   const [disciplineFilter, setDisciplineFilter] = useState("Todos");
   const [cycle, setCycle] = useState("2027");
   const [syncing, setSyncing] = useState(false);
-  const [showSearch, setShowSearch] = useState(false);
   const [infoTab, setInfoTab] = useState("news");
   const [detail, setDetail] = useState(null);
+  const [page, setPage] = useState(1);
 
-  // Pre-matrícula local
   const [preForm, setPreForm] = useState({ nombre: "", email: "", carrera: "", institucion: "" });
   const [preList, setPreList] = useState(() => {
     const saved = localStorage.getItem("zynatra_prematricula");
@@ -45,6 +46,11 @@ export default function NetworkDirectory() {
   useEffect(() => {
     localStorage.setItem("zynatra_prematricula", JSON.stringify(preList));
   }, [preList]);
+
+  // Reset page whenever the active tab or the filters change
+  useEffect(() => {
+    setPage(1);
+  }, [activeTab, search, typeFilter, disciplineFilter]);
 
   const onlineNodes = useMemo(() => INSTITUTIONS.filter(i => i.status === "online").length, []);
   const totalNodes = INSTITUTIONS.length;
@@ -68,6 +74,11 @@ export default function NetworkDirectory() {
     return matchSearch && matchDisc;
   }), [allCareers, search, disciplineFilter]);
 
+  const isListTab = activeTab === "institutions" || activeTab === "careers";
+  const list = activeTab === "careers" ? filteredCareers : filteredInstitutions;
+  const totalPages = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
+  const pageItems = list.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
   const handleSync = () => {
     setSyncing(true);
     setTimeout(() => setSyncing(false), 1500);
@@ -86,155 +97,164 @@ export default function NetworkDirectory() {
     </button>
   );
 
+  const Pagination = () => {
+    if (!isListTab || totalPages <= 1) return null;
+    return (
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "0.75rem", paddingTop: "0.5rem" }}>
+        <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="btn btn-glass" style={{ gap: "0.35rem", opacity: page === 1 ? 0.45 : 1, cursor: page === 1 ? "not-allowed" : "pointer" }}>
+          <ChevronLeft size={16} /> Anterior
+        </button>
+        <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--text-secondary)" }}>
+          Página {page} de {totalPages}
+        </span>
+        <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="btn btn-glass" style={{ gap: "0.35rem", opacity: page === totalPages ? 0.45 : 1, cursor: page === totalPages ? "not-allowed" : "pointer" }}>
+          Siguiente <ChevronRight size={16} />
+        </button>
+      </div>
+    );
+  };
+
   return (
-    <div className="animate-fade-in" style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-      {/* HEADER */}
-      <div className="page-header">
-        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.5rem" }}>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", background: "rgba(16,185,129,0.12)", color: "#10b981", padding: "0.3rem 0.75rem", borderRadius: "999px", fontSize: "0.7rem", fontWeight: 800, letterSpacing: "0.03em" }}>
-            <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#10b981", boxShadow: "0 0 8px #10b981" }} />
-            CONEXIÓN ACTIVA EN TIEMPO REAL
-          </span>
-          <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Sincronizado {new Date().toLocaleTimeString("es-NI", { hour: "2-digit", minute: "2-digit" })}</span>
-        </div>
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap" }}>
-          <div style={{ flex: 1, minWidth: "260px" }}>
-            <h1 style={{ fontSize: "2.2rem", fontWeight: 800, letterSpacing: "-0.02em" }}>
-              Red Académica <span style={{ color: "#5bbfbf" }}>Universitaria &amp; Técnica</span>
-            </h1>
-            <p style={{ color: "var(--text-secondary)", marginTop: "0.35rem", maxWidth: "900px" }}>
-              Conexión directa y en tiempo real con universidades del CNU y colegios tecnológicos (INATEC).
-              Explora la oferta académica en curso ({cycle === "2027" ? "2027" : "2026"}) y asegura tu cupo para el <strong>Año Académico 2027</strong>.
-            </p>
+    <div className="animate-fade-in" style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+      {/* ===== STICKY TOP: título + tabs + filtros ===== */}
+      <div className="page-header" style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
+        <div>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.4rem" }}>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", background: "rgba(16,185,129,0.12)", color: "#10b981", padding: "0.3rem 0.75rem", borderRadius: "999px", fontSize: "0.7rem", fontWeight: 800, letterSpacing: "0.03em" }}>
+              <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#10b981", boxShadow: "0 0 8px #10b981" }} />
+              CONEXIÓN ACTIVA EN TIEMPO REAL
+            </span>
+            <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Sincronizado {new Date().toLocaleTimeString("es-NI", { hour: "2-digit", minute: "2-digit" })}</span>
           </div>
-          <button
-            onClick={() => setShowSearch(s => !s)}
-            className={`btn ${showSearch ? "btn-secondary" : "btn-glass"}`}
-            style={{ gap: "0.4rem", flexShrink: 0 }}
-            aria-label="Buscar"
-          >
-            <Search size={18} /> Buscar
-          </button>
+          <h1 style={{ fontSize: "clamp(1.6rem, 3.5vw, 2.2rem)", fontWeight: 800, letterSpacing: "-0.02em" }}>
+            Red Académica <span style={{ color: "#5bbfbf" }}>Universitaria &amp; Técnica</span>
+          </h1>
+          <p style={{ color: "var(--text-secondary)", marginTop: "0.3rem" }}>
+            Conexión directa con universidades del CNU y colegios tecnológicos (INATEC). Explora la oferta académica {cycle === "2027" ? "2027" : "2026"} y asegura tu cupo para el <strong>Año Académico 2027</strong>.
+          </p>
         </div>
-        {showSearch && (
-          <div style={{ position: "relative", marginTop: "0.85rem" }}>
-            <Search size={18} style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
-            <input
-              className="input-field"
-              autoFocus
-              placeholder="Buscar instituciones, carreras o ubicaciones..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              style={{ paddingLeft: "2.75rem" }}
-            />
+
+        {/* TABS */}
+        <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+          {tabBtn("institutions", <Network size={16} />, <>Universidades &amp; Técnicos ({INSTITUTIONS.length})</>)}
+          {tabBtn("careers", <GraduationCap size={16} />, <>Carreras ({TOTAL_CAREERS})</>)}
+          {tabBtn("prematricula", <CheckCircle size={16} />, <>Pre-Matrícula {preList.length > 0 && `(${preList.length})`}</>)}
+          {tabBtn("calendar", <Calendar size={16} />, "Calendario CNU")}
+          {tabBtn("scholarships", <Award size={16} />, "Becas & Gratuidad")}
+          {tabBtn("salas", <Users size={16} />, "Salas en Vivo")}
+          {tabBtn("articles", <BookOpen size={16} />, "Guías")}
+        </div>
+
+        {/* FILTROS (solo instituciones/carreras) */}
+        {isListTab && (
+          <div className="glass-panel" style={{ padding: "1rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+            <div style={{ position: "relative" }}>
+              <Search size={18} style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
+              <input
+                className="input-field"
+                placeholder={activeTab === "careers" ? "Buscar entre 246 carreras..." : "Buscar universidades o institutos en Nicaragua..."}
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                style={{ paddingLeft: "2.75rem" }}
+              />
+            </div>
+            <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+              {(activeTab === "careers" ? DISCIPLINES : ["Todos", "Universidad", "Instituto"]).map(f => (
+                <button
+                  key={f}
+                  onClick={() => activeTab === "careers" ? setDisciplineFilter(f) : setTypeFilter(f)}
+                  className={`btn ${(activeTab === "careers" ? disciplineFilter : typeFilter) === f ? "btn-secondary" : "btn-glass"}`}
+                  style={{ padding: "0.4rem 1rem", fontSize: "0.8rem", borderRadius: "20px" }}
+                >
+                  {f}
+                </button>
+              ))}
+            </div>
           </div>
         )}
       </div>
 
-      {/* INFO ROW: Nodo (izq) + Tabs Aviso/Convocatoria (der) */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: "1rem" }}>
-        {/* NODO */}
-        <div className="glass-panel" style={{ padding: "1.25rem", display: "flex", flexDirection: "column", justifyContent: "space-between", gap: "1rem" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.9rem" }}>
-            <Wifi size={24} style={{ color: "#10b981" }} />
-            <div>
-              <p style={{ fontSize: "0.72rem", fontWeight: 800, color: "var(--text-muted)", letterSpacing: "0.05em" }}>NODO CENTRAL CNU-MANAGUA</p>
-              <p style={{ fontSize: "1.3rem", fontWeight: 800 }}>
-                <span style={{ color: "#10b981" }}>{onlineNodes}/{totalNodes} Nodos</span>
-                <span style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginLeft: "0.6rem" }}>100% En Línea</span>
-              </p>
-            </div>
-          </div>
-          <button onClick={handleSync} className="btn btn-glass" style={{ gap: "0.4rem", justifyContent: "center" }}>
-            <RefreshCw size={16} className={syncing ? "spin" : ""} /> {syncing ? "Sincronizando..." : "Sincronizar Nodos"}
-          </button>
-        </div>
-
-        {/* TABS: Aviso / Convocatoria */}
-        <div className="glass-panel" style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
-          <div style={{ display: "flex", gap: "0.5rem" }}>
-            <button onClick={() => setInfoTab("news")} className={`btn ${infoTab === "news" ? "btn-secondary" : "btn-glass"}`} style={{ gap: "0.35rem", fontSize: "0.8rem", padding: "0.4rem 0.9rem" }}>
-              <Activity size={14} /> Aviso CNU
-            </button>
-            <button onClick={() => setInfoTab("conv")} className={`btn ${infoTab === "conv" ? "btn-primary" : "btn-glass"}`} style={{ gap: "0.35rem", fontSize: "0.8rem", padding: "0.4rem 0.9rem" }}>
-              <Sparkles size={14} /> Convocatoria
-            </button>
-          </div>
-
-          {infoTab === "news" ? (
-            <div style={{ display: "flex", gap: "1rem", alignItems: "flex-start" }}>
-              <span style={{ background: "linear-gradient(135deg,#8b5cf6,#6d28d9)", color: "#fff", fontWeight: 800, fontSize: "0.62rem", padding: "0.5rem 0.6rem", borderRadius: "10px", textAlign: "center", lineHeight: 1.1, flexShrink: 0 }}>
-                EN<br />VIVO
-              </span>
+      {/* ===== INFO ROW (nodo + aviso/convocatoria) ===== */}
+      {activeTab === "institutions" && (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: "1rem" }}>
+          <div className="glass-panel" style={{ padding: "1.25rem", display: "flex", flexDirection: "column", justifyContent: "space-between", gap: "1rem" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.9rem" }}>
+              <Wifi size={24} style={{ color: "#10b981" }} />
               <div>
-                <p style={{ fontSize: "0.88rem" }}>
-                  <strong>Bicentenario UNAN-León:</strong> Calendario de Admisión en León, CUR Somoto y Jinotega Ciclo 2027 — Publicado el calendario oficial para Medicina, Odontología, Farmacia y Telemática.
+                <p style={{ fontSize: "0.72rem", fontWeight: 800, color: "var(--text-muted)", letterSpacing: "0.05em" }}>NODO CENTRAL CNU-MANAGUA</p>
+                <p style={{ fontSize: "1.3rem", fontWeight: 800 }}>
+                  <span style={{ color: "#10b981" }}>{onlineNodes}/{totalNodes} Nodos</span>
+                  <span style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginLeft: "0.6rem" }}>100% En Línea</span>
                 </p>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginTop: "0.6rem" }}>
-                  <span style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>Hace 25 minutos</span>
-                  <button onClick={() => setActiveTab("calendar")} className="btn btn-glass" style={{ gap: "0.3rem", fontSize: "0.75rem", padding: "0.3rem 0.7rem" }}>
-                    Revisar Calendario <ChevronRight size={13} />
+              </div>
+            </div>
+            <button onClick={handleSync} className="btn btn-glass" style={{ gap: "0.4rem", justifyContent: "center" }}>
+              <RefreshCw size={16} className={syncing ? "spin" : ""} /> {syncing ? "Sincronizando..." : "Sincronizar Nodos"}
+            </button>
+          </div>
+
+          <div className="glass-panel" style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
+            <div style={{ display: "flex", gap: "0.5rem" }}>
+              <button onClick={() => setInfoTab("news")} className={`btn ${infoTab === "news" ? "btn-secondary" : "btn-glass"}`} style={{ gap: "0.35rem", fontSize: "0.8rem", padding: "0.4rem 0.9rem" }}>
+                <Activity size={14} /> Aviso CNU
+              </button>
+              <button onClick={() => setInfoTab("conv")} className={`btn ${infoTab === "conv" ? "btn-primary" : "btn-glass"}`} style={{ gap: "0.35rem", fontSize: "0.8rem", padding: "0.4rem 0.9rem" }}>
+                <Sparkles size={14} /> Convocatoria
+              </button>
+            </div>
+
+            {infoTab === "news" ? (
+              <div style={{ display: "flex", gap: "1rem", alignItems: "flex-start" }}>
+                <span style={{ background: "linear-gradient(135deg,#8b5cf6,#6d28d9)", color: "#fff", fontWeight: 800, fontSize: "0.62rem", padding: "0.5rem 0.6rem", borderRadius: "10px", textAlign: "center", lineHeight: 1.1, flexShrink: 0 }}>
+                  EN<br />VIVO
+                </span>
+                <div>
+                  <p style={{ fontSize: "0.88rem" }}>
+                    <strong>Bicentenario UNAN-León:</strong> Calendario de Admisión en León, CUR Somoto y Jinotega Ciclo 2027 — Publicado el calendario oficial para Medicina, Odontología, Farmacia y Telemática.
+                  </p>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginTop: "0.6rem" }}>
+                    <span style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>Hace 25 minutos</span>
+                    <button onClick={() => setActiveTab("calendar")} className="btn btn-glass" style={{ gap: "0.3rem", fontSize: "0.75rem", padding: "0.3rem 0.7rem" }}>
+                      Revisar Calendario <ChevronRight size={13} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem", flex: 1 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                  <span style={{ fontSize: "1.6rem" }}>🚀</span>
+                  <div style={{ flex: 1 }}>
+                    <h3 style={{ fontSize: "1.05rem", fontWeight: 800 }}>
+                      {cycle === "2027" ? "Convocatoria & Admisión 2027" : "Ciclo Actual 2026"}
+                    </h3>
+                    <p style={{ color: "var(--text-secondary)", fontSize: "0.82rem" }}>
+                      Más de 74,800 cupos con 100% de gratuidad para el Año Académico 2027.
+                    </p>
+                  </div>
+                  <span className="badge badge-accent" style={{ fontSize: "0.62rem", whiteSpace: "nowrap" }}>
+                    {cycle === "2027" ? "PRE-MATRÍCULA ABIERTA" : "EN CURSO"}
+                  </span>
+                </div>
+                <div style={{ display: "flex", gap: "0.5rem", marginTop: "auto" }}>
+                  <button onClick={() => setCycle("2027")} className={`btn ${cycle === "2027" ? "btn-primary" : "btn-glass"}`} style={{ gap: "0.35rem", fontSize: "0.8rem", padding: "0.4rem 0.9rem" }}>
+                    <Sparkles size={13} /> Año 2027
+                  </button>
+                  <button onClick={() => setCycle("2026")} className={`btn ${cycle === "2026" ? "btn-secondary" : "btn-glass"}`} style={{ gap: "0.35rem", fontSize: "0.8rem", padding: "0.4rem 0.9rem" }}>
+                    <Clock size={13} /> Año 2026
                   </button>
                 </div>
               </div>
-            </div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem", flex: 1 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                <span style={{ fontSize: "1.6rem" }}>🚀</span>
-                <div style={{ flex: 1 }}>
-                  <h3 style={{ fontSize: "1.05rem", fontWeight: 800 }}>
-                    {cycle === "2027" ? "Convocatoria & Admisión 2027" : "Ciclo Actual 2026"}
-                  </h3>
-                  <p style={{ color: "var(--text-secondary)", fontSize: "0.82rem" }}>
-                    Más de 74,800 cupos con 100% de gratuidad para el Año Académico 2027.
-                  </p>
-                </div>
-                <span className="badge badge-accent" style={{ fontSize: "0.62rem", whiteSpace: "nowrap" }}>
-                  {cycle === "2027" ? "PRE-MATRÍCULA ABIERTA" : "EN CURSO"}
-                </span>
-              </div>
-              <div style={{ display: "flex", gap: "0.5rem", marginTop: "auto" }}>
-                <button onClick={() => setCycle("2027")} className={`btn ${cycle === "2027" ? "btn-primary" : "btn-glass"}`} style={{ gap: "0.35rem", fontSize: "0.8rem", padding: "0.4rem 0.9rem" }}>
-                  <Sparkles size={13} /> Año 2027
-                </button>
-                <button onClick={() => setCycle("2026")} className={`btn ${cycle === "2026" ? "btn-secondary" : "btn-glass"}`} style={{ gap: "0.35rem", fontSize: "0.8rem", padding: "0.4rem 0.9rem" }}>
-                  <Clock size={13} /> Año 2026
-                </button>
-              </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* TABS */}
-      <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-        {tabBtn("institutions", <Network size={16} />, <>Universidades &amp; Colegios Técnicos ({INSTITUTIONS.length})</>)}
-        {tabBtn("careers", <GraduationCap size={16} />, <>Oferta de Carreras ({TOTAL_CAREERS})</>)}
-        {tabBtn("prematricula", <CheckCircle size={16} />, <>Pre-Matrícula 2027 {preList.length > 0 && `(${preList.length})`}</>)}
-        {tabBtn("calendar", <Calendar size={16} />, "Calendario CNU 2026-2027")}
-        {tabBtn("scholarships", <Award size={16} />, "Becas & Gratuidad")}
-        {tabBtn("salas", <Users size={16} />, "Salas en Vivo")}
-        {tabBtn("articles", <BookOpen size={16} />, "Guías")}
-      </div>
-
-      {/* ===== INSTITUTIONS ===== */}
+      {/* ===== CONTENT ===== */}
       {activeTab === "institutions" && (
         <>
-          <div className="glass-panel" style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
-            <div style={{ position: "relative" }}>
-              <Search size={18} style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
-              <input className="input-field" placeholder="Buscar universidades o institutos en Nicaragua..." value={search} onChange={e => setSearch(e.target.value)} style={{ paddingLeft: "2.75rem" }} />
-            </div>
-            <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-              {["Todos", "Universidad", "Instituto"].map(t => (
-                <button key={t} onClick={() => setTypeFilter(t)} className={`btn ${typeFilter === t ? "btn-secondary" : "btn-glass"}`} style={{ padding: "0.4rem 1rem", fontSize: "0.8rem", borderRadius: "20px" }}>{t}</button>
-              ))}
-            </div>
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: "1.25rem" }}>
-            {filteredInstitutions.map(inst => (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "1rem" }}>
+            {pageItems.map(inst => (
               <div key={inst.id} className="glass-card" style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
                 <div style={{ display: "flex", gap: "0.9rem", alignItems: "center" }}>
                   <span style={{ fontSize: "2rem" }}>{inst.logo}</span>
@@ -267,26 +287,14 @@ export default function NetworkDirectory() {
               </div>
             ))}
           </div>
+          <Pagination />
         </>
       )}
 
-      {/* ===== CAREERS ===== */}
       {activeTab === "careers" && (
         <>
-          <div className="glass-panel" style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
-            <div style={{ position: "relative" }}>
-              <Search size={18} style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
-              <input className="input-field" placeholder="Buscar entre 246 carreras..." value={search} onChange={e => setSearch(e.target.value)} style={{ paddingLeft: "2.75rem" }} />
-            </div>
-            <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-              {DISCIPLINES.map(d => (
-                <button key={d} onClick={() => setDisciplineFilter(d)} className={`btn ${disciplineFilter === d ? "btn-secondary" : "btn-glass"}`} style={{ padding: "0.4rem 1rem", fontSize: "0.8rem", borderRadius: "20px" }}>{d}</button>
-              ))}
-            </div>
-          </div>
-          <p style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--text-secondary)" }}>Oferta académica ({filteredCareers.length})</p>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "1rem" }}>
-            {filteredCareers.slice(0, 120).map(c => (
+            {pageItems.map(c => (
               <div key={c.id} className="glass-card" style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span style={{ fontSize: "1.4rem" }}>{c.logo}</span>
@@ -302,12 +310,12 @@ export default function NetworkDirectory() {
               </div>
             ))}
           </div>
+          <Pagination />
         </>
       )}
 
-      {/* ===== PRE-MATRICULA ===== */}
       {activeTab === "prematricula" && (
-        <div style={{ display: "grid", gridTemplateColumns: "minmax(300px, 420px) 1fr", gap: "1.5rem" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "minmax(300px, 420px) 1fr", gap: "1.5rem" }} className="responsive-grid">
           <form onSubmit={handlePreSubmit} className="glass-panel" style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1rem", height: "fit-content" }}>
             <h3 style={{ fontSize: "1.15rem", fontWeight: 800 }}>Expediente de Admisión 2027</h3>
             <input className="input-field" placeholder="Nombre completo" value={preForm.nombre} onChange={e => setPreForm({ ...preForm, nombre: e.target.value })} />
@@ -334,7 +342,6 @@ export default function NetworkDirectory() {
         </div>
       )}
 
-      {/* ===== CALENDAR ===== */}
       {activeTab === "calendar" && (
         <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
           {ADMISSION_PHASES.map((f, i) => (
@@ -352,7 +359,6 @@ export default function NetworkDirectory() {
         </div>
       )}
 
-      {/* ===== SCHOLARSHIPS ===== */}
       {activeTab === "scholarships" && (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "1.5rem" }}>
           {SCHOLARSHIPS.map(b => (
@@ -376,7 +382,6 @@ export default function NetworkDirectory() {
         </div>
       )}
 
-      {/* ===== SALAS EN VIVO ===== */}
       {activeTab === "salas" && (
         <div className="glass-card" style={{ padding: "2rem", textAlign: "center" }}>
           <Users size={40} style={{ color: "var(--primary)", margin: "0 auto 1rem" }} />
@@ -387,7 +392,6 @@ export default function NetworkDirectory() {
         </div>
       )}
 
-      {/* ===== ARTICLES / GUIDES ===== */}
       {activeTab === "articles" && (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "1.5rem" }}>
           {[
@@ -405,7 +409,7 @@ export default function NetworkDirectory() {
         </div>
       )}
 
-      {/* ===== DETAIL MODAL ===== */}
+      {/* ===== DETAIL MODAL (Portal) ===== */}
       {detail && createPortal(
         <div onClick={() => setDetail(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", padding: "1.5rem", zIndex: 1000 }}>
           <div onClick={e => e.stopPropagation()} className="glass-panel" style={{ background: "#fff", maxWidth: "760px", width: "100%", maxHeight: "88vh", overflowY: "auto", padding: "1.75rem" }}>
