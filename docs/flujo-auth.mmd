@@ -1,0 +1,11 @@
+sequenceDiagram
+    participant U as Usuario
+    participant APP as SPA (React)
+    participant AUTH as Firebase Auth
+    participant DB as Firestore
+    U->>APP: Ingresa email + contrasena
+    APP->>AUTH: signInWithEmailAndPassword
+    AUTH-->>APP: JWT (ID Token) + refresh
+    APP->>DB: Consulta datos (con JWT)
+    DB-->>APP: Documentos (segun reglas)
+    APP-->>U: Dashboard por rol (estudiante/docente/admin)

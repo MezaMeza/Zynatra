@@ -1,0 +1,19 @@
+flowchart TD
+    S3["Sprint 3 - Desarrollo"] --> F1
+    S3 --> F2
+    S3 --> F3
+    S3 --> F4
+    S3 --> F5
+    F1["1. Rendimiento y Acceso - en linea, carga rapida, URL"] --> F1a["HTTP 200 - aprox 0.5s"]
+    F1 --> F1b["Code-splitting + gzip + cache"]
+    F1 --> F1c["ErrorBoundary + cache offline"]
+    F2["2. Seguridad (HTTPS) - certificado SSL valido"] --> F2a["Cert *.azurewebsites.net (Microsoft)"]
+    F2 --> F2b["HTTPS forzado"]
+    F3["3. Flujo Automatico - end-to-end + errores amigables"] --> F3a["Login -> dashboard por rol"]
+    F3 --> F3b["404.html + 50x.html (sin codigo)"]
+    F3 --> F3c["SPA fallback"]
+    F4["4. Integraciones Complejas - JWT + BD + APIs"] --> F4a["Firebase Auth (tokens JWT)"]
+    F4 --> F4b["Firestore (6 colecciones)"]
+    F4 --> F4c["Reglas de seguridad"]
+    F5["5. Codigo Vinculado a GitHub - codigo = repo main + README"] --> F5a["Commit desplegado = main"]
+    F5 --> F5b["README con guia de despliegue"]

@@ -1,0 +1,10 @@
+flowchart TD
+    DEV["Desarrollador"] -->|git push| GH["GitHub: MezaMeza/Zynatra (main)"]
+    GH -->|npm run build| BUILD["Build Vite optimizado: code-splitting + gzip"]
+    BUILD -->|multi-stage| DOCKER["Dockerfile: Node build -> Nginx non-root"]
+    DOCKER -->|docker tag/push| ACR["Azure Container Registry: zynatraacr2026"]
+    ACR -->|pull imagen| ASP["Azure App Service for Containers: Linux B1 - westus"]
+    ASP --> NGINX["Contenedor Nginx non-root :8080"]
+    NGINX -->|sirve SPA| USER["Usuario (HTTPS): zynatra-app-2026.azurewebsites.net"]
+    NGINX -.->|lecturas/escrituras| FB["Firebase: Auth (JWT) + Firestore Native"]
+    ASP -.->|metricas| MON["Azure Monitor: 2 alertas + action group"]

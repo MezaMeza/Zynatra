@@ -1,0 +1,8 @@
+flowchart LR
+    A["1. Codigo local"] --> B["2. .env con claves (gitignored)"]
+    B --> C["3. docker compose build"]
+    C --> D["4. az acr login + docker push"]
+    D --> E["5. az webapp config container set"]
+    E --> F["6. az webapp restart"]
+    F --> G["7. Verificacion: curl HTTP 200 - Server: nginx"]
+    G --> H["8. Firebase Console: Authorized domains + rules"]
