@@ -223,7 +223,7 @@ export default function ProgressHub({ setActiveTab }) {
                   width: "28px",
                   height: "28px",
                   borderRadius: "50%",
-                  background: i === 0 ? "linear-gradient(135deg, #fbbf24, #d97706)" : "rgba(255,255,255,0.05)",
+                  background: i === 0 ? "linear-gradient(135deg, #fbbf24, #d97706)" : "#eef2f6",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",

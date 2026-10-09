@@ -251,7 +251,7 @@ export default function SuperuserDashboard() {
                 </span>
                 <span style={{ fontWeight: 700 }}>{count} estudiantes</span>
               </div>
-              <div style={{ height: "10px", background: "rgba(255,255,255,0.05)", borderRadius: "5px" }}>
+              <div style={{ height: "10px", background: "#eef2f6", borderRadius: "5px" }}>
                 <div style={{
                   height: "100%",
                   width: `${(count / maxStat) * 100}%`,

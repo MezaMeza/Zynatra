@@ -290,7 +290,7 @@ export default function TeacherDashboard({ setActiveTab }) {
                     </div>
 
                     <div style={{
-                      background: "rgba(255, 255, 255, 0.02)",
+                      background: "#f8fafc",
                       border: "1px solid var(--border-glass)",
                       padding: "0.75rem",
                       borderRadius: "var(--radius-sm)",

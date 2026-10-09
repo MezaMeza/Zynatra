@@ -325,7 +325,7 @@ export default function StudentDashboard({ setActiveTab }) {
         <div style={{
           height: "14px",
           width: "100%",
-          background: "rgba(255, 255, 255, 0.05)",
+          background: "#eef2f6",
           borderRadius: "10px",
           overflow: "hidden",
           border: "1px solid var(--border-glass)"
@@ -469,7 +469,7 @@ export default function StudentDashboard({ setActiveTab }) {
                       </button>
                     ) : (
                       <div style={{
-                        background: "rgba(255, 255, 255, 0.02)",
+                        background: "#f8fafc",
                         padding: "0.75rem",
                         borderRadius: "var(--radius-sm)",
                         border: "1px solid var(--border-glass)",

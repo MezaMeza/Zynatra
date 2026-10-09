@@ -104,7 +104,7 @@ export default function VirtualAdvisor({ setActiveTab }) {
               <div className={msg.role === "user" ? "glass-card" : ""} style={{
                 padding: "0.85rem 1.1rem",
                 borderRadius: "var(--radius-md)",
-                background: msg.role === "user" ? "rgba(139, 92, 246, 0.15)" : "rgba(255,255,255,0.03)",
+                background: msg.role === "user" ? "rgba(139, 92, 246, 0.15)" : "#f1f5f9",
                 border: "1px solid var(--border-glass)",
                 fontSize: "0.9rem",
                 lineHeight: "1.55",
