@@ -21,6 +21,7 @@ export default function ProgressHub({ setActiveTab }) {
   const [newGoal, setNewGoal] = useState("");
   const [newPlazo, setNewPlazo] = useState("corto");
   const [showForm, setShowForm] = useState(false);
+  const [achPage, setAchPage] = useState(1);
 
   if (!studentInfo) return <div>Cargando progreso...</div>;
 
@@ -29,6 +30,10 @@ export default function ProgressHub({ setActiveTab }) {
   const streak = studentInfo.streak?.count || 0;
   const todayChallenges = getTodaysChallenges();
   const completedToday = studentInfo.dailyChallenges?.completed || [];
+
+  const ACH_PAGE_SIZE = 8;
+  const achTotalPages = Math.max(1, Math.ceil(achievements.length / ACH_PAGE_SIZE));
+  const achPageItems = achievements.slice((achPage - 1) * ACH_PAGE_SIZE, achPage * ACH_PAGE_SIZE);
 
   const handleAddGoal = async (e) => {
     e.preventDefault();
@@ -46,7 +51,7 @@ export default function ProgressHub({ setActiveTab }) {
 
   return (
     <div className="animate-fade-in" style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
-      <div>
+      <div className="page-header">
         <h1 style={{ fontSize: "2.2rem", fontWeight: 800 }}>
           Mi <span className="text-gradient-primary">Progreso</span>
         </h1>
@@ -254,7 +259,7 @@ export default function ProgressHub({ setActiveTab }) {
           <h3 style={{ fontWeight: 800, fontSize: "1.15rem" }}>Logros y Certificados</h3>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "1rem" }}>
-          {achievements.map(ach => {
+          {achPageItems.map(ach => {
             const isUnlocked = unlocked.includes(ach.id);
             return (
               <div key={ach.id} className="glass-card" style={{
@@ -272,6 +277,13 @@ export default function ProgressHub({ setActiveTab }) {
             );
           })}
         </div>
+        {achTotalPages > 1 && (
+          <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "0.75rem", paddingTop: "0.5rem" }}>
+            <button onClick={() => setAchPage(p => Math.max(1, p - 1))} disabled={achPage === 1} className="btn btn-glass" style={{ opacity: achPage === 1 ? 0.45 : 1, cursor: achPage === 1 ? "not-allowed" : "pointer" }}>Anterior</button>
+            <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--text-secondary)" }}>Página {achPage} de {achTotalPages}</span>
+            <button onClick={() => setAchPage(p => Math.min(achTotalPages, p + 1))} disabled={achPage === achTotalPages} className="btn btn-glass" style={{ opacity: achPage === achTotalPages ? 0.45 : 1, cursor: achPage === achTotalPages ? "not-allowed" : "pointer" }}>Siguiente</button>
+          </div>
+        )}
       </div>
 
       <style>{`

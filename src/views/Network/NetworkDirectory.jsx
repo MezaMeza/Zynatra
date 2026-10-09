@@ -92,7 +92,7 @@ export default function NetworkDirectory() {
   };
 
   const tabBtn = (id, icon, label, extra) => (
-    <button onClick={() => changeTab(id)} className={`btn ${activeTab === id ? "btn-secondary" : "btn-glass"}`} style={{ gap: "0.4rem" }}>
+    <button onClick={() => changeTab(id)} className={`btn ${activeTab === id ? "btn-secondary" : "btn-glass"}`} style={{ gap: "0.4rem", whiteSpace: "nowrap", flexShrink: 0, padding: "0.5rem 0.9rem", fontSize: "0.82rem" }}>
       {icon} {label}{extra}
     </button>
   );
@@ -131,8 +131,8 @@ export default function NetworkDirectory() {
           </p>
         </div>
 
-        {/* TABS */}
-        <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+        {/* TABS (una sola línea) */}
+        <div style={{ display: "flex", gap: "0.5rem", flexWrap: "nowrap", overflowX: "auto", paddingBottom: "0.25rem" }}>
           {tabBtn("institutions", <Network size={16} />, <>Universidades &amp; Técnicos ({INSTITUTIONS.length})</>)}
           {tabBtn("careers", <GraduationCap size={16} />, <>Carreras ({TOTAL_CAREERS})</>)}
           {tabBtn("prematricula", <CheckCircle size={16} />, <>Pre-Matrícula {preList.length > 0 && `(${preList.length})`}</>)}
