@@ -73,14 +73,9 @@ button {
   border-color: rgba(91, 191, 191, 0.3);
 }
 
-/* Sticky page header — keeps the view title visible while scrolling */
+/* Page header (non-sticky — scrolls with the content, as before) */
 .page-header {
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  background: var(--bg-dark);
-  padding-top: 0.5rem;
-  padding-bottom: 0.85rem;
+  padding-bottom: 0.5rem;
 }
 
 .glass-card {
