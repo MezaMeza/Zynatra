@@ -814,7 +814,7 @@ export default function Login() {
               <input
                 type="email"
                 style={styles.input}
-                placeholder="tu-correo@persola.com"
+                placeholder="tu-correo@ejemplo.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
