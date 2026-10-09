@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # ZYNATRA — Documentación Técnica
 
 **Plataforma de Orientación Vocacional con Inteligencia Artificial**
@@ -127,6 +126,104 @@ zynatra/
             ├── SuperuserDashboard.jsx
             └── AdminUsersPanel.jsx
 ```
+
+### Archivos de infraestructura (producción)
+
+```
+├── Dockerfile                 → Imagen multi-stage (build + Nginx non-root)
+├── docker-compose.yml         → Stack app + proxy para correr localmente
+├── .dockerignore              → Contexto de build mínimo
+├── .env.example               → Plantilla de variables de entorno
+├── firebase.json              → Config para desplegar reglas de Firestore
+├── firestore.rules            → Reglas de seguridad de la base de datos
+├── nginx/
+│   ├── nginx.conf             → Reverse proxy (proxy → app)
+│   └── app.conf               → Servidor estático (caché, gzip, errores)
+├── scripts/
+│   └── gzip-dist.mjs          → Pre-compresión gzip post-build
+├── deploy/
+│   ├── azure-setup.sh         → Provisión de VM + hardening (referencia)
+│   ├── monitoring.sh          → Log Analytics + alertas (referencia)
+│   └── README.md              → Guía de provisioning
+├── public/
+│   ├── logoz.png              → Logo de la app
+│   ├── 404.html               → Página de error amigable (no encontrado)
+│   └── 50x.html               → Página de error amigable (servicio caído)
+└── docs/
+    ├── SPRINT-2-ENTREGABLES.md → Entregables y evidencia (Sprint 2)
+    └── INTEGRACIONES.md        → Integraciones (Auth JWT, Firestore, API)
+```
+
+---
+
+## Despliegue en producción
+
+La aplicación está desplegada en **Azure App Service for Containers** con un contenedor **Nginx non-root** que sirve el build estático.
+
+**URL de producción:** https://zynatra-app-2026.azurewebsites.net/
+
+### Arquitectura
+
+```
+Internet ──HTTPS──▶ Azure App Service (front-end gestionado, TLS)
+                        │
+                        └──▶ Contenedor Nginx (non-root, :8080)
+                                └── sirve el build estático (dist/)
+                                        │
+                                        └──▶ Firebase (Auth + Firestore)
+```
+
+### Requisitos
+- [Docker](https://docs.docker.com/get-docker/)
+- [Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli) (`az`)
+- Acceso a la suscripción de Azure y al Container Registry
+
+### 1. Build local (imagen de producción)
+
+```bash
+# Configurar variables de entorno (Firebase)
+cp .env.example .env
+# editar .env con las claves reales de Firebase
+
+# Construir la imagen
+docker compose build app
+
+# Probar el stack localmente
+docker compose up -d
+# -> http://localhost
+```
+
+### 2. Publicar la imagen en Azure Container Registry
+
+```bash
+az login
+az acr login -n zynatraacr2026
+
+docker tag zynatra-app:latest zynatraacr2026.azurecr.io/zynatra-app:v4
+docker push zynatraacr2026.azurecr.io/zynatra-app:v4
+```
+
+### 3. Desplegar en App Service
+
+```bash
+az webapp config container set -g zynatra-rg -n zynatra-app-2026 \
+  --container-image-name zynatraacr2026.azurecr.io/zynatra-app:v4 \
+  --container-registry-url https://zynatraacr2026.azurecr.io \
+  --container-registry-user zynatraacr2026 \
+  --container-registry-password "<ACR_PASSWORD>"
+
+az webapp restart -g zynatra-rg -n zynatra-app-2026
+```
+
+### 4. Verificación
+
+```bash
+curl -I https://zynatra-app-2026.azurewebsites.net/
+# HTTP/1.1 200 OK
+# Server: nginx
+```
+
+> **Nota:** el código desplegado corresponde a la rama `main` de este repositorio. Para provisioning de servidor (VM, red, monitoreo) ver `deploy/README.md` y `docs/SPRINT-2-ENTREGABLES.md`.
 
 ---
 
@@ -370,7 +467,3 @@ Julio 2026
 <!-- Games -->
 
 <!-- XP -->
-=======
-# ZINATRA
-APLICACION DE TEST VOCACIONAL
->>>>>>> ea4109339b617c923a6b9e9e0bc3bfdda4baa447

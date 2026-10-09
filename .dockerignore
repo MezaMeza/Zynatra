@@ -1,0 +1,17 @@
+# Keep the build context small and free of secrets/build output.
+node_modules
+dist
+dist-ssr
+.git
+.gitignore
+.env
+.env.*
+.atl
+android
+*.log
+npm-debug.log*
+
+# Local docs / tooling not needed to build the image.
+.vscode
+.idea
+coverage

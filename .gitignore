@@ -13,6 +13,9 @@ dist-ssr
 *.local
 .env
 
+# SDD / Agent Teams Lite
+.atl/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

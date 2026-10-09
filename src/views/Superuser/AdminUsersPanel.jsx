@@ -321,7 +321,7 @@ export default function AdminUsersPanel() {
                 background: "linear-gradient(135deg, var(--primary), var(--secondary))",
                 display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: "1.25rem"
               }}>
-                {detailUser.nombre.charAt(0)}
+                {(detailUser.nombre || detailUser.email || "?").charAt(0).toUpperCase()}
               </div>
               <div>
                 <span className={`badge ${detailUser.estado === "suspendido" ? "badge-danger" : "badge-accent"}`}>{detailUser.estado || "activo"}</span>

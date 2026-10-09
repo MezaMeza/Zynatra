@@ -1,0 +1,102 @@
+rules_version = '2';
+
+// Zynatra Firestore rules — deny by default, then grant authenticated,
+// role-aware access to the collections the app uses.
+//
+// Roles live on the `users/{uid}` document under `rol`
+// (values: "student" | "teacher" | "admin").
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---- helpers ---------------------------------------------------------
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function uid() {
+      return request.auth.uid;
+    }
+
+    function isAdmin() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/users/$(uid()))
+        && get(/databases/$(database)/documents/users/$(uid())).data.rol == 'admin';
+    }
+
+    function isStaff() {
+      return isSignedIn()
+        && exists(/databases/$(database)/documents/users/$(uid()))
+        && get(/databases/$(database)/documents/users/$(uid())).data.rol in ['admin', 'teacher'];
+    }
+
+    // ---- default deny ----------------------------------------------------
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // ---- users -----------------------------------------------------------
+    // A user reads/updates their own profile; staff read everyone; only admin
+    // deletes.
+    match /users/{userId} {
+      allow read: if isSignedIn() && (userId == uid() || isStaff());
+      // A user may create their own profile, but MUST NOT self-assign a
+      // privileged role: `rol` is restricted to non-admin values on self-create.
+      // Only an existing admin may create users with arbitrary roles.
+      allow create: if isSignedIn() && (
+        (userId == uid() && request.resource.data.rol in ['student', 'teacher'])
+        || isAdmin()
+      );
+      // A user may update their own profile, but MUST NOT change their own
+      // role (prevents student/teacher -> admin escalation). Only admins may
+      // change roles.
+      allow update: if isSignedIn() && (
+        (userId == uid() && request.resource.data.rol == resource.data.rol)
+        || isAdmin()
+      );
+      allow delete: if isAdmin();
+    }
+
+    // ---- students --------------------------------------------------------
+    // `students/{uid}` holds the academic profile. Student owns their doc;
+    // staff can read/write.
+    match /students/{studentId} {
+      allow read: if isSignedIn() && (studentId == uid() || isStaff());
+      allow create, update: if isSignedIn() && (studentId == uid() || isStaff());
+      allow delete: if isAdmin();
+    }
+
+    // ---- tasks -----------------------------------------------------------
+    // Teachers manage tasks; any authenticated user can read them.
+    match /tasks/{taskId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isStaff();
+    }
+
+    // ---- submissions -----------------------------------------------------
+    // A student owns their submission (`estudianteId == uid`); staff can read
+    // and grade all of them.
+    match /submissions/{submissionId} {
+      allow read: if isSignedIn() && (resource.data.estudianteId == uid() || isStaff());
+      allow create: if isSignedIn()
+        && request.resource.data.estudianteId == uid();
+      allow update: if isSignedIn() && (resource.data.estudianteId == uid() || isStaff());
+      allow delete: if isAdmin();
+    }
+
+    // ---- connections -----------------------------------------------------
+    // School/institute directory — readable by staff, managed by admins.
+    match /connections/{connectionId} {
+      allow read: if isStaff();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // ---- recovery_requests ----------------------------------------------
+    // Password-recovery tickets. Authenticated users may open one; only staff
+    // can read/process them.
+    match /recovery_requests/{requestId} {
+      allow read: if isStaff();
+      allow create: if isSignedIn();
+      allow update, delete: if isAdmin();
+    }
+  }
+}

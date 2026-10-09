@@ -149,7 +149,7 @@ export default function Sidebar({ activeTab, setActiveTab }) {
               display: "flex", alignItems: "center", justifyContent: "center",
               fontWeight: 700, fontSize: "1rem", color: "#fff"
             }}>
-              {currentUser.nombre.charAt(0).toUpperCase()}
+              {(currentUser.nombre || currentUser.email || "?").charAt(0).toUpperCase()}
             </div>
             <div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
               <p style={{ fontSize: "0.9rem", fontWeight: 600 }}>{currentUser.nombre}</p>

@@ -1,18 +1,40 @@
-import React, { useState, Component } from "react";
+import { useState, Component, lazy, Suspense } from "react";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { DataProvider } from "./context/DataContext";
 import Login from "./views/Login/Login";
 import Sidebar from "./components/Sidebar";
-import StudentDashboard from "./views/Dashboard/StudentDashboard";
-import TeacherDashboard from "./views/Teacher/TeacherDashboard";
-import SuperuserDashboard from "./views/Superuser/SuperuserDashboard";
-import VocationalTest from "./views/Vocational/VocationalTest";
-import NetworkDirectory from "./views/Network/NetworkDirectory";
-import VirtualAdvisor from "./views/Advisor/VirtualAdvisor";
-import ResourceLibrary from "./views/Resources/ResourceLibrary";
-import ProgressHub from "./views/Progress/ProgressHub";
-import GamesHub from "./views/Games/GamesHub";
 import "./App.css";
+
+// Views are code-split so the heavy Firebase-backed dashboards are only
+// downloaded when the user actually navigates to them. Login stays eager
+// because it is the first screen every unauthenticated user sees.
+const StudentDashboard = lazy(() => import("./views/Dashboard/StudentDashboard"));
+const TeacherDashboard = lazy(() => import("./views/Teacher/TeacherDashboard"));
+const SuperuserDashboard = lazy(() => import("./views/Superuser/SuperuserDashboard"));
+const VocationalTest = lazy(() => import("./views/Vocational/VocationalTest"));
+const NetworkDirectory = lazy(() => import("./views/Network/NetworkDirectory"));
+const VirtualAdvisor = lazy(() => import("./views/Advisor/VirtualAdvisor"));
+const ResourceLibrary = lazy(() => import("./views/Resources/ResourceLibrary"));
+const ProgressHub = lazy(() => import("./views/Progress/ProgressHub"));
+const GamesHub = lazy(() => import("./views/Games/GamesHub"));
+
+function ViewFallback() {
+  return (
+    <div
+      style={{
+        display: "flex",
+        minHeight: "50vh",
+        alignItems: "center",
+        justifyContent: "center",
+        fontSize: "1rem",
+        fontWeight: 600,
+        color: "var(--text-secondary)",
+      }}
+    >
+      Cargando...
+    </div>
+  );
+}
 
 class ErrorBoundary extends Component {
   constructor(props) {
@@ -95,7 +117,9 @@ function AppContent() {
   return (
     <div className="app-container">
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
-      <main className="main-content">{renderActiveView()}</main>
+      <main className="main-content">
+        <Suspense fallback={<ViewFallback />}>{renderActiveView()}</Suspense>
+      </main>
     </div>
   );
 }
