@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { createPortal } from "react-dom";
 import { useData } from "../../context/DataContext";
 import { useAuth } from "../../context/AuthContext";
 import { 
@@ -515,7 +516,7 @@ export default function StudentDashboard({ setActiveTab }) {
       </div>
 
       {/* Submit Assignment Inline Modal/View */}
-      {selectedTask && (
+      {selectedTask && createPortal(
         <div style={{
           position: "fixed",
           top: 0,
@@ -576,11 +577,12 @@ export default function StudentDashboard({ setActiveTab }) {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* MODAL TUTORIAL INTERACTIVO DE BIENVENIDA (3 PASOS) */}
-      {showTutorial && (
+      {showTutorial && createPortal(
         <div style={{
           position: "fixed",
           top: 0,
@@ -702,7 +704,8 @@ export default function StudentDashboard({ setActiveTab }) {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Inject custom styles for responsive layout mapping */}
