@@ -33,7 +33,7 @@ import {
 const DataContext = createContext();
 
 export const DataProvider = ({ children }) => {
-  const { currentUser } = useAuth();
+  const { currentUser, effectiveRole } = useAuth();
   const [studentInfo, setStudentInfo] = useState(null);
   const [tasks, setTasks] = useState([]);
   const [submissions, setSubmissions] = useState([]);
@@ -86,7 +86,7 @@ export const DataProvider = ({ children }) => {
       const connData = await getConnections();
       setConnections(connData);
 
-      if (currentUser.rol === "student") {
+      if (effectiveRole === "student") {
         await recordStreak(currentUser.uid);
         const stdData = await getStudentData(currentUser.uid);
         await checkAchievements(currentUser.uid, stdData);
@@ -101,7 +101,7 @@ export const DataProvider = ({ children }) => {
 
         const board = await getLeaderboard(currentUser.colegioId);
         setLeaderboard(board);
-      } else if (currentUser.rol === "teacher") {
+      } else if (effectiveRole === "teacher") {
         const tasksData = await getTasks(currentUser.uid);
         setTasks(tasksData);
 
@@ -110,7 +110,7 @@ export const DataProvider = ({ children }) => {
 
         const studentsData = await getSchoolStudents(currentUser.colegioId);
         setSchoolStudents(studentsData);
-      } else if (currentUser.rol === "admin") {
+      } else if (effectiveRole === "admin") {
         const tasksData = await getTasks();
         setTasks(tasksData);
 
@@ -138,7 +138,7 @@ export const DataProvider = ({ children }) => {
 
   useEffect(() => {
     refreshData();
-  }, [currentUser]);
+  }, [currentUser, effectiveRole]);
 
   const submitAssignment = async (tareaId, feedbackEstudiante) => {
     if (!currentUser) return;

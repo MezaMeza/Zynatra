@@ -31,6 +31,8 @@ export default function NetworkDirectory() {
   const [disciplineFilter, setDisciplineFilter] = useState("Todos");
   const [cycle, setCycle] = useState("2027");
   const [syncing, setSyncing] = useState(false);
+  const [showSearch, setShowSearch] = useState(false);
+  const [infoTab, setInfoTab] = useState("news");
   const [detail, setDetail] = useState(null);
 
   // Pre-matrícula local
@@ -94,73 +96,113 @@ export default function NetworkDirectory() {
           </span>
           <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Sincronizado {new Date().toLocaleTimeString("es-NI", { hour: "2-digit", minute: "2-digit" })}</span>
         </div>
-        <h1 style={{ fontSize: "2.2rem", fontWeight: 800, letterSpacing: "-0.02em" }}>
-          Red Académica <span style={{ color: "#5bbfbf" }}>Universitaria &amp; Técnica</span>
-        </h1>
-        <p style={{ color: "var(--text-secondary)", marginTop: "0.35rem", maxWidth: "900px" }}>
-          Conexión directa y en tiempo real con universidades del CNU y colegios tecnológicos (INATEC).
-          Explora la oferta académica en curso ({cycle === "2027" ? "2027" : "2026"}) y asegura tu cupo para el <strong>Año Académico 2027</strong>.
-        </p>
-      </div>
-
-      {/* NODE STATUS */}
-      <div className="glass-panel" style={{ padding: "1rem 1.25rem", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.9rem" }}>
-          <Wifi size={22} style={{ color: "#10b981" }} />
-          <div>
-            <p style={{ fontSize: "0.75rem", fontWeight: 800, color: "var(--text-muted)", letterSpacing: "0.05em" }}>NODO CENTRAL CNU-MANAGUA</p>
-            <p style={{ fontSize: "1.15rem", fontWeight: 800 }}>
-              <span style={{ color: "#10b981" }}>{onlineNodes}/{totalNodes} Nodos</span>
-              <span style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginLeft: "0.6rem" }}>100% En Línea</span>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap" }}>
+          <div style={{ flex: 1, minWidth: "260px" }}>
+            <h1 style={{ fontSize: "2.2rem", fontWeight: 800, letterSpacing: "-0.02em" }}>
+              Red Académica <span style={{ color: "#5bbfbf" }}>Universitaria &amp; Técnica</span>
+            </h1>
+            <p style={{ color: "var(--text-secondary)", marginTop: "0.35rem", maxWidth: "900px" }}>
+              Conexión directa y en tiempo real con universidades del CNU y colegios tecnológicos (INATEC).
+              Explora la oferta académica en curso ({cycle === "2027" ? "2027" : "2026"}) y asegura tu cupo para el <strong>Año Académico 2027</strong>.
             </p>
           </div>
+          <button
+            onClick={() => setShowSearch(s => !s)}
+            className={`btn ${showSearch ? "btn-secondary" : "btn-glass"}`}
+            style={{ gap: "0.4rem", flexShrink: 0 }}
+            aria-label="Buscar"
+          >
+            <Search size={18} /> Buscar
+          </button>
         </div>
-        <button onClick={handleSync} className="btn btn-glass" style={{ gap: "0.4rem" }}>
-          <RefreshCw size={16} className={syncing ? "spin" : ""} /> {syncing ? "Sincronizando..." : "Sincronizar Nodos"}
-        </button>
+        {showSearch && (
+          <div style={{ position: "relative", marginTop: "0.85rem" }}>
+            <Search size={18} style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
+            <input
+              className="input-field"
+              autoFocus
+              placeholder="Buscar instituciones, carreras o ubicaciones..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              style={{ paddingLeft: "2.75rem" }}
+            />
+          </div>
+        )}
       </div>
 
-      {/* NEWS BANNER */}
-      <div className="glass-panel" style={{ padding: "1rem 1.25rem", display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap", border: "1px solid rgba(139,92,246,0.25)" }}>
-        <span style={{ background: "linear-gradient(135deg,#8b5cf6,#6d28d9)", color: "#fff", fontWeight: 800, fontSize: "0.7rem", padding: "0.5rem 0.7rem", borderRadius: "10px", textAlign: "center", lineHeight: 1.1 }}>
-          EN<br />VIVO<br />CNU
-        </span>
-        <div style={{ flex: 1, minWidth: "220px" }}>
-          <p style={{ fontSize: "0.9rem" }}>
-            <strong>Bicentenario UNAN-León:</strong> Calendario de Admisión en León, CUR Somoto y Jinotega Ciclo 2027 — Publicado el calendario oficial para Medicina, Odontología, Farmacia y Telemática en los recintos de occidente y el norte del país.
-          </p>
-        </div>
-        <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Hace 25 minutos</span>
-        <button onClick={() => setActiveTab("calendar")} className="btn btn-glass" style={{ gap: "0.3rem", fontSize: "0.8rem" }}>
-          Revisar Calendario <ChevronRight size={14} />
-        </button>
-      </div>
-
-      {/* CONVOCATORIA */}
-      <div className="glass-panel" style={{ padding: "1.5rem", background: "linear-gradient(135deg, rgba(16,185,129,0.08) 0%, rgba(6,182,212,0.05) 100%)" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-            <span style={{ fontSize: "2rem" }}>🚀</span>
+      {/* INFO ROW: Nodo (izq) + Tabs Aviso/Convocatoria (der) */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: "1rem" }}>
+        {/* NODO */}
+        <div className="glass-panel" style={{ padding: "1.25rem", display: "flex", flexDirection: "column", justifyContent: "space-between", gap: "1rem" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.9rem" }}>
+            <Wifi size={24} style={{ color: "#10b981" }} />
             <div>
-              <h3 style={{ fontSize: "1.3rem", fontWeight: 800 }}>
-                {cycle === "2027" ? "Convocatoria & Admisión: Año Académico 2027" : "Ciclo Actual: Año Académico 2026"}
-              </h3>
-              <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem", marginTop: "0.2rem" }}>
-                Estamos en el 2026 preparándote para ingresar a la universidad o instituto técnico en 2027. Más de 74,800 cupos con 100% de gratuidad.
+              <p style={{ fontSize: "0.72rem", fontWeight: 800, color: "var(--text-muted)", letterSpacing: "0.05em" }}>NODO CENTRAL CNU-MANAGUA</p>
+              <p style={{ fontSize: "1.3rem", fontWeight: 800 }}>
+                <span style={{ color: "#10b981" }}>{onlineNodes}/{totalNodes} Nodos</span>
+                <span style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginLeft: "0.6rem" }}>100% En Línea</span>
               </p>
             </div>
           </div>
-          <span className="badge badge-accent" style={{ fontSize: "0.7rem" }}>
-            {cycle === "2027" ? "PRE-MATRÍCULA ABIERTA" : "SEGUNDO SEMESTRE"}
-          </span>
+          <button onClick={handleSync} className="btn btn-glass" style={{ gap: "0.4rem", justifyContent: "center" }}>
+            <RefreshCw size={16} className={syncing ? "spin" : ""} /> {syncing ? "Sincronizando..." : "Sincronizar Nodos"}
+          </button>
         </div>
-        <div style={{ display: "flex", gap: "0.5rem", marginTop: "1.25rem" }}>
-          <button onClick={() => setCycle("2027")} className={`btn ${cycle === "2027" ? "btn-primary" : "btn-glass"}`} style={{ gap: "0.4rem" }}>
-            <Sparkles size={14} /> Año Académico 2027
-          </button>
-          <button onClick={() => setCycle("2026")} className={`btn ${cycle === "2026" ? "btn-secondary" : "btn-glass"}`} style={{ gap: "0.4rem" }}>
-            <Clock size={14} /> Año 2026 (En Curso)
-          </button>
+
+        {/* TABS: Aviso / Convocatoria */}
+        <div className="glass-panel" style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
+          <div style={{ display: "flex", gap: "0.5rem" }}>
+            <button onClick={() => setInfoTab("news")} className={`btn ${infoTab === "news" ? "btn-secondary" : "btn-glass"}`} style={{ gap: "0.35rem", fontSize: "0.8rem", padding: "0.4rem 0.9rem" }}>
+              <Activity size={14} /> Aviso CNU
+            </button>
+            <button onClick={() => setInfoTab("conv")} className={`btn ${infoTab === "conv" ? "btn-primary" : "btn-glass"}`} style={{ gap: "0.35rem", fontSize: "0.8rem", padding: "0.4rem 0.9rem" }}>
+              <Sparkles size={14} /> Convocatoria
+            </button>
+          </div>
+
+          {infoTab === "news" ? (
+            <div style={{ display: "flex", gap: "1rem", alignItems: "flex-start" }}>
+              <span style={{ background: "linear-gradient(135deg,#8b5cf6,#6d28d9)", color: "#fff", fontWeight: 800, fontSize: "0.62rem", padding: "0.5rem 0.6rem", borderRadius: "10px", textAlign: "center", lineHeight: 1.1, flexShrink: 0 }}>
+                EN<br />VIVO
+              </span>
+              <div>
+                <p style={{ fontSize: "0.88rem" }}>
+                  <strong>Bicentenario UNAN-León:</strong> Calendario de Admisión en León, CUR Somoto y Jinotega Ciclo 2027 — Publicado el calendario oficial para Medicina, Odontología, Farmacia y Telemática.
+                </p>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginTop: "0.6rem" }}>
+                  <span style={{ fontSize: "0.72rem", color: "var(--text-muted)" }}>Hace 25 minutos</span>
+                  <button onClick={() => setActiveTab("calendar")} className="btn btn-glass" style={{ gap: "0.3rem", fontSize: "0.75rem", padding: "0.3rem 0.7rem" }}>
+                    Revisar Calendario <ChevronRight size={13} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem", flex: 1 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                <span style={{ fontSize: "1.6rem" }}>🚀</span>
+                <div style={{ flex: 1 }}>
+                  <h3 style={{ fontSize: "1.05rem", fontWeight: 800 }}>
+                    {cycle === "2027" ? "Convocatoria & Admisión 2027" : "Ciclo Actual 2026"}
+                  </h3>
+                  <p style={{ color: "var(--text-secondary)", fontSize: "0.82rem" }}>
+                    Más de 74,800 cupos con 100% de gratuidad para el Año Académico 2027.
+                  </p>
+                </div>
+                <span className="badge badge-accent" style={{ fontSize: "0.62rem", whiteSpace: "nowrap" }}>
+                  {cycle === "2027" ? "PRE-MATRÍCULA ABIERTA" : "EN CURSO"}
+                </span>
+              </div>
+              <div style={{ display: "flex", gap: "0.5rem", marginTop: "auto" }}>
+                <button onClick={() => setCycle("2027")} className={`btn ${cycle === "2027" ? "btn-primary" : "btn-glass"}`} style={{ gap: "0.35rem", fontSize: "0.8rem", padding: "0.4rem 0.9rem" }}>
+                  <Sparkles size={13} /> Año 2027
+                </button>
+                <button onClick={() => setCycle("2026")} className={`btn ${cycle === "2026" ? "btn-secondary" : "btn-glass"}`} style={{ gap: "0.35rem", fontSize: "0.8rem", padding: "0.4rem 0.9rem" }}>
+                  <Clock size={13} /> Año 2026
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

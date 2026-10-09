@@ -9,6 +9,9 @@ export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  // Admin-only "view as" override so administrators can preview the app as
+  // student / teacher / admin without switching accounts.
+  const [viewAs, setViewAs] = useState(null);
 
   useEffect(() => {
     if (isFirebaseConfigured) {
@@ -93,6 +96,7 @@ export const AuthProvider = ({ children }) => {
     try {
       await logoutUser();
       setCurrentUser(null);
+      setViewAs(null);
       localStorage.removeItem("polaris_session");
     } catch (err) {
       console.error("Error al cerrar sesión:", err);
@@ -101,13 +105,19 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Effective role: the admin's preview override wins, otherwise the real role.
+  const effectiveRole = viewAs || currentUser?.rol || null;
+
   const value = {
     currentUser,
     loading,
     error,
     login,
     register,
-    logout
+    logout,
+    viewAs,
+    setViewAs,
+    effectiveRole
   };
 
   return <AuthContext.Provider value={value}>{!loading && children}</AuthContext.Provider>;

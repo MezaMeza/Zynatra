@@ -18,13 +18,13 @@ import {
 } from "lucide-react";
 
 export default function Sidebar({ activeTab, setActiveTab }) {
-  const { currentUser, logout } = useAuth();
+  const { currentUser, logout, viewAs, setViewAs, effectiveRole } = useAuth();
   const [mobileMore, setMobileMore] = useState(false);
 
   if (!currentUser) return null;
 
   const getMenuItems = () => {
-    if (currentUser.rol === "student") {
+    if (effectiveRole === "student") {
       return [
         { id: "dashboard", label: "Mi Panel", icon: LayoutDashboard },
         { id: "vocational", label: "Test IQ & Vocación", icon: Brain },
@@ -36,7 +36,7 @@ export default function Sidebar({ activeTab, setActiveTab }) {
       ];
     }
 
-    if (currentUser.rol === "teacher") {
+    if (effectiveRole === "teacher") {
       return [
         { id: "dashboard", label: "Clases y Tareas", icon: BookOpen },
         { id: "resources", label: "Biblioteca", icon: Library },
@@ -44,7 +44,7 @@ export default function Sidebar({ activeTab, setActiveTab }) {
       ];
     }
 
-    if (currentUser.rol === "admin") {
+    if (effectiveRole === "admin") {
       return [
         { id: "dashboard", label: "Dirección", icon: Settings },
         { id: "network", label: "Convenios", icon: Network }
@@ -58,10 +58,10 @@ export default function Sidebar({ activeTab, setActiveTab }) {
   };
 
   const menuItems = getMenuItems();
-  const mobilePrimary = currentUser.rol === "student"
+  const mobilePrimary = effectiveRole === "student"
     ? menuItems.slice(0, 4)
     : menuItems.slice(0, 3);
-  const mobileMoreItems = currentUser.rol === "student"
+  const mobileMoreItems = effectiveRole === "student"
     ? menuItems.slice(4)
     : menuItems.slice(3);
 
@@ -124,9 +124,9 @@ export default function Sidebar({ activeTab, setActiveTab }) {
               ZYNATRA
             </h2>
             <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: 700 }}>
-              {currentUser.rol === "student" && "Estudiante"}
-              {currentUser.rol === "teacher" && "Docente"}
-              {currentUser.rol === "admin" && "Dirección"}
+              {effectiveRole === "student" && "Estudiante"}
+              {effectiveRole === "teacher" && "Docente"}
+              {effectiveRole === "admin" && "Dirección"}
             </span>
           </div>
         </div>
@@ -142,6 +142,47 @@ export default function Sidebar({ activeTab, setActiveTab }) {
           flexDirection: "column",
           gap: "1rem"
         }}>
+          {currentUser.rol === "admin" && (
+            <div>
+              <p style={{ fontSize: "0.66rem", fontWeight: 800, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "0.5rem" }}>
+                Modo de vista (admin)
+              </p>
+              <div style={{ display: "flex", gap: "0.2rem", background: "rgba(80,184,196,0.10)", padding: "0.25rem", borderRadius: "12px" }}>
+                {[
+                  { id: "student", label: "Estudiante" },
+                  { id: "teacher", label: "Docente" },
+                  { id: "admin", label: "Dirección" }
+                ].map(m => {
+                  const active = (effectiveRole || "admin") === m.id;
+                  return (
+                    <button
+                      key={m.id}
+                      onClick={() => setViewAs(m.id === currentUser.rol ? null : m.id)}
+                      style={{
+                        flex: 1,
+                        border: "none",
+                        cursor: "pointer",
+                        borderRadius: "9px",
+                        padding: "0.4rem 0.25rem",
+                        fontSize: "0.68rem",
+                        fontWeight: active ? 800 : 600,
+                        background: active ? "#50b8c4" : "transparent",
+                        color: active ? "#fff" : "var(--text-secondary)",
+                        transition: "all 0.15s ease"
+                      }}
+                    >
+                      {m.label}
+                    </button>
+                  );
+                })}
+              </div>
+              {viewAs && (
+                <p style={{ fontSize: "0.68rem", color: "#b7791f", marginTop: "0.4rem", fontWeight: 600 }}>
+                  Viendo como {viewAs === "student" ? "Estudiante" : viewAs === "teacher" ? "Docente" : "Dirección"}
+                </p>
+              )}
+            </div>
+          )}
           <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
             <div style={{
               width: "40px", height: "40px", borderRadius: "50%",

@@ -66,7 +66,7 @@ class ErrorBoundary extends Component {
 }
 
 function AppContent() {
-  const { currentUser, loading } = useAuth();
+  const { currentUser, loading, effectiveRole } = useAuth();
   const [activeTab, setActiveTab] = useState("dashboard");
 
   if (loading) {
@@ -85,9 +85,9 @@ function AppContent() {
   const renderActiveView = () => {
     switch (activeTab) {
       case "dashboard":
-        if (currentUser.rol === "student") return <StudentDashboard setActiveTab={setActiveTab} />;
-        if (currentUser.rol === "teacher") return <TeacherDashboard setActiveTab={setActiveTab} />;
-        if (currentUser.rol === "admin") return <SuperuserDashboard />;
+        if (effectiveRole === "student") return <StudentDashboard setActiveTab={setActiveTab} />;
+        if (effectiveRole === "teacher") return <TeacherDashboard setActiveTab={setActiveTab} />;
+        if (effectiveRole === "admin") return <SuperuserDashboard />;
         return <div>Página no encontrada</div>;
 
       case "vocational":
@@ -109,7 +109,7 @@ function AppContent() {
         return <NetworkDirectory setActiveTab={setActiveTab} />;
 
       default:
-        if (currentUser.rol === "student") return <StudentDashboard setActiveTab={setActiveTab} />;
+        if (effectiveRole === "student") return <StudentDashboard setActiveTab={setActiveTab} />;
         return <div>Página no encontrada</div>;
     }
   };
