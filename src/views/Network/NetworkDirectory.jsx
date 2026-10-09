@@ -48,9 +48,9 @@ export default function NetworkDirectory() {
   }, [preList]);
 
   // Reset page whenever the active tab or the filters change
-  useEffect(() => {
-    setPage(1);
-  }, [activeTab, search, typeFilter, disciplineFilter]);
+  const changeTab = (id) => { setActiveTab(id); setPage(1); };
+  const changeSearch = (v) => { setSearch(v); setPage(1); };
+  const changeFilter = (f) => { activeTab === "careers" ? setDisciplineFilter(f) : setTypeFilter(f); setPage(1); };
 
   const onlineNodes = useMemo(() => INSTITUTIONS.filter(i => i.status === "online").length, []);
   const totalNodes = INSTITUTIONS.length;
@@ -92,27 +92,24 @@ export default function NetworkDirectory() {
   };
 
   const tabBtn = (id, icon, label, extra) => (
-    <button onClick={() => setActiveTab(id)} className={`btn ${activeTab === id ? "btn-secondary" : "btn-glass"}`} style={{ gap: "0.4rem" }}>
+    <button onClick={() => changeTab(id)} className={`btn ${activeTab === id ? "btn-secondary" : "btn-glass"}`} style={{ gap: "0.4rem" }}>
       {icon} {label}{extra}
     </button>
   );
 
-  const Pagination = () => {
-    if (!isListTab || totalPages <= 1) return null;
-    return (
-      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "0.75rem", paddingTop: "0.5rem" }}>
-        <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="btn btn-glass" style={{ gap: "0.35rem", opacity: page === 1 ? 0.45 : 1, cursor: page === 1 ? "not-allowed" : "pointer" }}>
-          <ChevronLeft size={16} /> Anterior
-        </button>
-        <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--text-secondary)" }}>
-          Página {page} de {totalPages}
-        </span>
-        <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="btn btn-glass" style={{ gap: "0.35rem", opacity: page === totalPages ? 0.45 : 1, cursor: page === totalPages ? "not-allowed" : "pointer" }}>
-          Siguiente <ChevronRight size={16} />
-        </button>
-      </div>
-    );
-  };
+  const paginationNode = (isListTab && totalPages > 1) ? (
+    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "0.75rem", paddingTop: "0.5rem" }}>
+      <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="btn btn-glass" style={{ gap: "0.35rem", opacity: page === 1 ? 0.45 : 1, cursor: page === 1 ? "not-allowed" : "pointer" }}>
+        <ChevronLeft size={16} /> Anterior
+      </button>
+      <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--text-secondary)" }}>
+        Página {page} de {totalPages}
+      </span>
+      <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="btn btn-glass" style={{ gap: "0.35rem", opacity: page === totalPages ? 0.45 : 1, cursor: page === totalPages ? "not-allowed" : "pointer" }}>
+        Siguiente <ChevronRight size={16} />
+      </button>
+    </div>
+  ) : null;
 
   return (
     <div className="animate-fade-in" style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
@@ -154,7 +151,7 @@ export default function NetworkDirectory() {
                 className="input-field"
                 placeholder={activeTab === "careers" ? "Buscar entre 246 carreras..." : "Buscar universidades o institutos en Nicaragua..."}
                 value={search}
-                onChange={e => setSearch(e.target.value)}
+                onChange={e => changeSearch(e.target.value)}
                 style={{ paddingLeft: "2.75rem" }}
               />
             </div>
@@ -162,7 +159,7 @@ export default function NetworkDirectory() {
               {(activeTab === "careers" ? DISCIPLINES : ["Todos", "Universidad", "Instituto"]).map(f => (
                 <button
                   key={f}
-                  onClick={() => activeTab === "careers" ? setDisciplineFilter(f) : setTypeFilter(f)}
+                  onClick={() => changeFilter(f)}
                   className={`btn ${(activeTab === "careers" ? disciplineFilter : typeFilter) === f ? "btn-secondary" : "btn-glass"}`}
                   style={{ padding: "0.4rem 1rem", fontSize: "0.8rem", borderRadius: "20px" }}
                 >
@@ -287,7 +284,7 @@ export default function NetworkDirectory() {
               </div>
             ))}
           </div>
-          <Pagination />
+          {paginationNode}
         </>
       )}
 
@@ -310,7 +307,7 @@ export default function NetworkDirectory() {
               </div>
             ))}
           </div>
-          <Pagination />
+          {paginationNode}
         </>
       )}
 
