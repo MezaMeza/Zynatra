@@ -3,7 +3,7 @@
 > **Proyecto:** ZYNATRA — Plataforma de Orientación Vocacional
 > **Fecha:** Octubre 2026
 > **App en producción:** https://zynatra-app-2026.azurewebsites.net/
-> **Repositorio:** https://github.com/cris2008cris/ZINATRA
+> **Repositorio:** https://github.com/MezaMeza/Zynatra
 > **Commit de referencia:** `cd67d82` — *feat(deploy): production deployment stack (Docker, Nginx, Azure) + Sprint docs*
 
 ---
@@ -16,7 +16,7 @@
 | 2 | Seguridad (HTTPS) | ✅ Cumplido |
 | 3 | Flujo Automático | ✅ Cumplido |
 | 4 | Integraciones Complejas | ✅ Cumplido |
-| 5 | Código Vinculado a GitHub | 🟡 Parcial (commit local; push pendiente) |
+| 5 | Código Vinculado a GitHub | ✅ Cumplido |
 
 ---
 
@@ -152,14 +152,18 @@ error_page 500 502 503 504 /50x.html;
   - Verificación con `curl`.
 - **Imagen desplegada:** `zynatraacr2026.azurecr.io/zynatra-app:v4` — construida desde el commit `cd67d82`.
 
-### ⚠️ Pendiente para cerrar el entregable
-El commit está **local** (`cd67d82`). Para cumplir 100% el requisito, hay que **hacer push a `main`** en GitHub:
+### Repositorio publicado
+El código desplegado está en la rama `main` de GitHub:
+
+**https://github.com/MezaMeza/Zynatra**
 
 ```bash
-git push origin main
+git push mezameza main
+# -> * [new branch] main -> main
 ```
 
-*(Pendiente por decisión explícita: no subir a Git todavía.)*
+- **Commit desplegado:** `7b8136c`
+- La imagen en Azure (`zynatra-app:v5`) fue construida desde este mismo commit.
 
 ---
 
